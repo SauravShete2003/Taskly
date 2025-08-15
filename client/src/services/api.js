@@ -1,3 +1,4 @@
+// client/src/services/api.js
 import axios from 'axios';
 
 const API_BASE_URL =
@@ -8,10 +9,8 @@ const API_BASE_URL =
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-  // withCredentials: false, // token-based auth. If your backend uses cookies, set true and remove auth header logic.
 });
 
-// Attach Authorization header unless explicitly skipped
 api.interceptors.request.use(
   (config) => {
     if (!config._skipAuthHeader) {
@@ -26,7 +25,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle 401s from protected calls only (not login/register)
 api.interceptors.response.use(
   (response) => response,
   (error) => {

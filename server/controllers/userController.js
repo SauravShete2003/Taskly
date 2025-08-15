@@ -1,69 +1,110 @@
+// server/controllers/userController.js
 import User from '../models/User.js';
-import { 
-  successResponse, 
-  // errorResponse, 
+import {
+  successResponse,
   notFoundResponse,
   forbiddenResponse,
-  asyncHandler 
+  asyncHandler,
 } from '../utils/responseHandler.js';
-import { HTTP_STATUS } from '../utils/constants.js';
 
-// Get all users (for admin purposes)
+// Get all users (admin only) with optional pagination
 export const getUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({ isActive: true })
-    .select('-password')
-    .sort({ createdAt: -1 });
+  if (req.user?.role !== 'admin') {
+    return forbiddenResponse(res, 'Only admins can view all users');
+  }
 
-  return successResponse(res, { users });
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 20;
+  const filter = { isActive: true };
+
+  const [users, total] = await Promise.all([
+    User.find(filter)
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
+    User.countDocuments(filter),
+  ]);
+
+  return successResponse(res, {
+    users,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
+    },
+  });
 });
 
-// Get user by ID
+// Get user by ID (self or admin)
 export const getUserById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const user = await User.findById(id).select('-password');
 
-  if (!user) {
-    return notFoundResponse(res, 'User not found');
+  if (req.user._id.toString() !== id && req.user.role !== 'admin') {
+    return forbiddenResponse(res, 'You can only view your own profile');
   }
+
+  const user = await User.findById(id).select('-password');
+  if (!user) return notFoundResponse(res, 'User not found');
 
   return successResponse(res, { user });
 });
 
-// Update user
+// Get current authenticated user
+export const getCurrentUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).select('-password');
+  if (!user) return notFoundResponse(res, 'User not found');
+
+  return successResponse(res, { user });
+});
+
+// Update user (self or admin)
 export const updateUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { name, avatar } = req.body;
-  const currentUser = req.user;
 
-  // Check if user is updating their own profile or is admin
-  if (currentUser._id.toString() !== id && currentUser.role !== 'admin') {
+  if (req.user._id.toString() !== id && req.user.role !== 'admin') {
     return forbiddenResponse(res, 'You can only update your own profile');
   }
 
   const updateData = {};
-  if (name) updateData.name = name;
-  if (avatar) updateData.avatar = avatar;
+  if (name !== undefined) updateData.name = name;
+  if (avatar !== undefined) updateData.avatar = avatar;
 
-  const user = await User.findByIdAndUpdate(
-    id,
-    updateData,
-    { new: true, runValidators: true }
-  ).select('-password');
+  const user = await User.findByIdAndUpdate(id, updateData, {
+    new: true,
+    runValidators: true,
+  }).select('-password');
 
-  if (!user) {
-    return notFoundResponse(res, 'User not found');
-  }
+  if (!user) return notFoundResponse(res, 'User not found');
 
   return successResponse(res, { user }, 'User updated successfully');
 });
 
-// Delete user
+// Update current authenticated user
+export const updateCurrentUser = asyncHandler(async (req, res) => {
+  const { name, avatar } = req.body;
+
+  const updateData = {};
+  if (name !== undefined) updateData.name = name;
+  if (avatar !== undefined) updateData.avatar = avatar;
+
+  const user = await User.findByIdAndUpdate(req.user._id, updateData, {
+    new: true,
+    runValidators: true,
+  }).select('-password');
+
+  if (!user) return notFoundResponse(res, 'User not found');
+
+  return successResponse(res, { user }, 'User updated successfully');
+});
+
+// Delete (deactivate) user (self or admin)
 export const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const currentUser = req.user;
 
-  // Check if user is deleting their own account or is admin
-  if (currentUser._id.toString() !== id && currentUser.role !== 'admin') {
+  if (req.user._id.toString() !== id && req.user.role !== 'admin') {
     return forbiddenResponse(res, 'You can only delete your own account');
   }
 
@@ -73,9 +114,20 @@ export const deleteUser = asyncHandler(async (req, res) => {
     { new: true }
   ).select('-password');
 
-  if (!user) {
-    return notFoundResponse(res, 'User not found');
-  }
+  if (!user) return notFoundResponse(res, 'User not found');
 
   return successResponse(res, null, 'User deactivated successfully');
-}); 
+});
+
+// Delete (deactivate) current authenticated user
+export const deleteCurrentUser = asyncHandler(async (req, res) => {
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { isActive: false },
+    { new: true }
+  ).select('-password');
+
+  if (!user) return notFoundResponse(res, 'User not found');
+
+  return successResponse(res, null, 'User deactivated successfully');
+});

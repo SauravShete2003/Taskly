@@ -1,3 +1,4 @@
+// server/utils/validation.js
 import { body, param, query, validationResult } from 'express-validator';
 import { DEFAULTS } from './constants.js';
 
@@ -71,10 +72,17 @@ export const userValidation = {
       .matches(/^(?=.*[a-zA-Z])(?=.*\d)/)
       .withMessage('New password must contain at least one letter and one number'),
     handleValidationErrors
+  ],
+
+  userId: [
+    param('id')
+      .isMongoId()
+      .withMessage('Invalid user ID'),
+    handleValidationErrors
   ]
 };
 
-// Project validation schemas
+// Project validation schemas (keep if used elsewhere)
 export const projectValidation = {
   create: [
     body('name')
@@ -127,7 +135,7 @@ export const projectValidation = {
   ]
 };
 
-// Board validation schemas
+// Board validation schemas (keep if used elsewhere)
 export const boardValidation = {
   create: [
     body('name')
@@ -172,7 +180,7 @@ export const boardValidation = {
   ]
 };
 
-// Task validation schemas
+// Task validation schemas (keep if used elsewhere)
 export const taskValidation = {
   create: [
     body('title')
@@ -252,4 +260,4 @@ export const paginationValidation = [
     .isInt({ min: 1, max: 100 })
     .withMessage('Limit must be between 1 and 100'),
   handleValidationErrors
-]; 
+];

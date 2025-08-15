@@ -1,3 +1,4 @@
+// client/src/services/auth.js
 import api from './api';
 
 // Tries common places: data.token, data.accessToken, data.jwt, or nested under data.data
@@ -26,7 +27,6 @@ export const authService = {
       }
     );
 
-    // Your API shape: { success, message, data: {...} }
     const token =
       extractToken(res.data?.data) || extractToken(res.data);
 
@@ -65,13 +65,14 @@ export const authService = {
     window.dispatchEvent(new Event('authChange'));
   },
 
+  // Aligned to backend /users/me
   getProfile: async () => {
-    const res = await api.get('/auth/profile');
+    const res = await api.get('/users/me');
     return res.data;
   },
 
   updateProfile: async (userData) => {
-    const res = await api.put('/auth/profile', userData);
+    const res = await api.put('/users/me', userData);
     return res.data;
   },
 
