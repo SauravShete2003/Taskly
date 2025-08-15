@@ -1,10 +1,10 @@
 // src/pages/ProjectDetails.jsx
-import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import Layout from '../components/Layout/Layout';
-import { projectService } from '../services/projects';
-import { authService } from '../services/auth';
-import { Pencil, Trash2, ArrowLeft, Users } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import Layout from "../components/Layout/Layout";
+import { projectService } from "../services/projects";
+import { authService } from "../services/auth";
+import { Pencil, Trash2, ArrowLeft, Users } from "lucide-react";
 
 function isUserAdmin(project, userId) {
   if (!project || !userId) return false;
@@ -14,8 +14,11 @@ function isUserAdmin(project, userId) {
   const members = project.members || [];
   return members.some((m) => {
     const mid = m.user?._id || m.user;
-    const role = (m.role || '').toLowerCase();
-    return mid?.toString() === userId?.toString() && (role === 'admin' || role === 'owner');
+    const role = (m.role || "").toLowerCase();
+    return (
+      mid?.toString() === userId?.toString() &&
+      (role === "admin" || role === "owner")
+    );
   });
 }
 
@@ -31,31 +34,34 @@ const ProjectDetails = () => {
   const [me, setMe] = useState(null);
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const canEdit = useMemo(() => isUserAdmin(project, me?._id), [project, me]);
   const canDelete = useMemo(() => isUserOwner(project, me?._id), [project, me]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return navigate('/login');
+    const token = localStorage.getItem("token");
+    if (!token) return navigate("/login");
 
-    authService.getProfile().then(setMe).catch(() => {});
+    authService
+      .getProfile()
+      .then(setMe)
+      .catch(() => {});
     loadProject();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
   const loadProject = async () => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const p = await projectService.getProjectById(projectId);
       setProject(p);
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
-        (err?.response?.status === 403 ? 'Access denied' : '') ||
-        'Failed to load project';
+        (err?.response?.status === 403 ? "Access denied" : "") ||
+        "Failed to load project";
       setError(msg);
     } finally {
       setLoading(false);
@@ -64,14 +70,16 @@ const ProjectDetails = () => {
 
   const handleDelete = async () => {
     if (!canDelete) return;
-    const ok = window.confirm('Are you sure you want to delete this project? This cannot be undone.');
+    const ok = window.confirm(
+      "Are you sure you want to delete this project? This cannot be undone."
+    );
     if (!ok) return;
 
     try {
       await projectService.deleteProject(projectId);
-      navigate('/dashboard');
+      navigate("/dashboard");
     } catch (err) {
-      alert(err?.response?.data?.message || 'Delete failed');
+      alert(err?.response?.data?.message || "Delete failed");
     }
   };
 
@@ -83,7 +91,7 @@ const ProjectDetails = () => {
             <Link to="/dashboard" className="text-gray-600 hover:text-gray-900">
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <h1 className="text-2xl font-bold">{project?.name || 'Project'}</h1>
+            <h1 className="text-2xl font-bold">{project?.name || "Project"}</h1>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -111,23 +119,36 @@ const ProjectDetails = () => {
         {loading ? (
           <div className="py-8 text-center text-gray-600">Loading...</div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">{error}</div>
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+            {error}
+          </div>
         ) : project ? (
           <div className="space-y-6">
             <div className="bg-white shadow rounded-lg p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold">{project.name}</h2>
-                  <p className="text-gray-600 mt-1">{project.description || 'No description'}</p>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="inline-block h-3 w-3 rounded-full border"
+                      style={{ backgroundColor: project.color || "#E5E7EB" }}
+                      title={project.color || "No color"}
+                    />
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {project.name}
+                    </h3>
+                  </div>
+                  <p className="text-gray-600 mt-1">
+                    {project.description || "No description"}
+                  </p>
                 </div>
                 <div className="flex items-center space-x-3">
                   <span
                     className="inline-flex items-center justify-center h-6 w-6 rounded-full border"
-                    style={{ backgroundColor: project.color || '#E5E7EB' }}
+                    style={{ backgroundColor: project.color || "#E5E7EB" }}
                     title={project.color}
                   />
                   <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
-                    {project.isPublic ? 'Public' : 'Private'}
+                    {project.isPublic ? "Public" : "Private"}
                   </span>
                 </div>
               </div>
@@ -142,26 +163,36 @@ const ProjectDetails = () => {
                 <div className="flex items-center justify-between border-b pb-2">
                   <div>
                     <div className="text-gray-900 font-medium">
-                      Owner: {project.owner?.name || project.owner?.email || 'Owner'}
+                      Owner:{" "}
+                      {project.owner?.name || project.owner?.email || "Owner"}
                     </div>
-                    <div className="text-gray-500 text-sm">{project.owner?.email}</div>
+                    <div className="text-gray-500 text-sm">
+                      {project.owner?.email}
+                    </div>
                   </div>
-                  <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">owner</span>
+                  <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">
+                    owner
+                  </span>
                 </div>
 
                 {(project.members || []).length === 0 ? (
                   <div className="text-gray-600">No members</div>
                 ) : (
                   (project.members || []).map((m) => (
-                    <div key={(m.user?._id || m.user) + m.role} className="flex items-center justify-between border-b last:border-b-0 pb-2 last:pb-0">
+                    <div
+                      key={(m.user?._id || m.user) + m.role}
+                      className="flex items-center justify-between border-b last:border-b-0 pb-2 last:pb-0"
+                    >
                       <div>
                         <div className="text-gray-900 font-medium">
-                          {m.user?.name || m.user?.email || 'Member'}
+                          {m.user?.name || m.user?.email || "Member"}
                         </div>
-                        <div className="text-gray-500 text-sm">{m.user?.email}</div>
+                        <div className="text-gray-500 text-sm">
+                          {m.user?.email}
+                        </div>
                       </div>
                       <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">
-                        {(m.role || 'member').toString().toLowerCase()}
+                        {(m.role || "member").toString().toLowerCase()}
                       </span>
                     </div>
                   ))

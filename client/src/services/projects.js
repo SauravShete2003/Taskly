@@ -1,69 +1,66 @@
 import api from './api';
 
-// Normalize various backend shapes to a plain array for the projects list.
-// Supports:
-// - [ ... ]
-// - { data: [ ... ] }
-// - { data: { projects: [ ... ] } }
-// - { projects: [ ... ] }
-// - { results: [ ... ] } or { items: [ ... ] }
+function unwrapProject(payload) {
+  if (!payload) return null;
+  const data = payload.data ?? payload;
+  return data.project ?? data.item ?? data; // be tolerant
+}
+
+// unwrap arrays from different shapes
 function normalizeProjectsResponse(payload) {
   if (Array.isArray(payload)) return payload;
+
+  // typical backend shape: { success, message, data: { projects: [...] } }
   if (Array.isArray(payload?.data?.projects)) return payload.data.projects;
+
   if (Array.isArray(payload?.projects)) return payload.projects;
   if (Array.isArray(payload?.data)) return payload.data;
   if (Array.isArray(payload?.results)) return payload.results;
   if (Array.isArray(payload?.items)) return payload.items;
+
   return [];
 }
 
 export const projectService = {
   getProjects: async () => {
-    const response = await api.get('/projects');
-    const list = normalizeProjectsResponse(response.data);
-
-    if (!Array.isArray(list)) {
-      console.warn('Unexpected projects response shape:', response.data);
-      return [];
-    }
-
-    return list;
+    const res = await api.get('/projects');
+    return normalizeProjectsResponse(res.data);
   },
 
-  // These can stay as-is; adjust if you want similar normalization for single-project responses
   getProjectById: async (projectId) => {
-    const response = await api.get(`/projects/${projectId}`);
-    return response.data;
+    const res = await api.get(`/projects/${projectId}`);
+    return unwrapProject(res.data); // <- important
   },
 
   createProject: async (projectData) => {
-    const response = await api.post('/projects', projectData);
-    return response.data;
+    const res = await api.post('/projects', projectData);
+    return unwrapProject(res.data); // <- important
   },
 
   updateProject: async (projectId, projectData) => {
-    const response = await api.put(`/projects/${projectId}`, projectData);
-    return response.data;
+    const res = await api.put(`/projects/${projectId}`, projectData);
+    return unwrapProject(res.data); // <- important
   },
 
   deleteProject: async (projectId) => {
-    const response = await api.delete(`/projects/${projectId}`);
-    return response.data;
+    const res = await api.delete(`/projects/${projectId}`);
+    // backend returns { success, message, data: null }
+    return res.data;
   },
 
   addMember: async (projectId, memberData) => {
-    const response = await api.post(`/projects/${projectId}/members`, memberData);
-    return response.data;
+    const res = await api.post(`/projects/${projectId}/members`, memberData);
+    return unwrapProject(res.data); // backend returns { data: { project } }
   },
 
   removeMember: async (projectId, userId) => {
-    const response = await api.delete(`/projects/${projectId}/members/${userId}`);
-    return response.data;
+    const res = await api.delete(`/projects/${projectId}/members/${userId}`);
+    return unwrapProject(res.data);
   },
 
   updateMemberRole: async (projectId, userId, role) => {
-    const response = await api.put(`/projects/${projectId}/members/${userId}`, { role });
-    return response.data;
+    const res = await api.put(`/projects/${projectId}/members/${userId}`, { role });
+    return unwrapProject(res.data);
   },
 };
 

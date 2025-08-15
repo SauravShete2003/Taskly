@@ -16,8 +16,8 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // Routes - Specific routes first, then parameterized routes
-router.get('/project/:projectId', getBoards);
-router.post('/project/:projectId', boardValidation.create, createBoard);
+router.get('/projects/:projectId', getBoards);
+router.post('/projects/:projectId', boardValidation.create, createBoard);
 router.put('/reorder', reorderBoards); // This must come before /:boardId routes
 router.get('/:boardId', boardValidation.boardId, getBoardById);
 router.put('/:boardId', boardValidation.boardId, boardValidation.update, updateBoard);

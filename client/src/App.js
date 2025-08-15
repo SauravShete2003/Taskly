@@ -7,8 +7,7 @@ import Register from './pages/Register';
 import ProjectForm from './pages/ProjectForm';
 import ProjectDetails from './pages/ProjectDetails';
 import BoardTasks from './pages/BoardTasks';
-import TaskForm from './pages/TaskForm';
-import TaskDetails from './pages/TaskDetails';
+import BoardsPage from './pages/BoardsPage';
 import './App.css';
 
 function App() {
@@ -43,22 +42,16 @@ function App() {
           <Route path="/projects/:projectId" element={isAuthenticated ? <ProjectDetails /> : <Navigate to="/login" replace />} />
           <Route path="/projects/:projectId/edit" element={isAuthenticated ? <ProjectForm /> : <Navigate to="/login" replace />} />
 
-          {/* Boards + Tasks */}
+          {/* Boards */}
+          <Route
+            path="/projects/:projectId/boards"
+            element={isAuthenticated ? <BoardsPage /> : <Navigate to="/login" replace />}
+          />
+
+          {/* Board Tasks + Task CRUD */}
           <Route
             path="/projects/:projectId/boards/:boardId"
             element={isAuthenticated ? <BoardTasks /> : <Navigate to="/login" replace />}
-          />
-          <Route
-            path="/projects/:projectId/boards/:boardId/tasks/new"
-            element={isAuthenticated ? <TaskForm /> : <Navigate to="/login" replace />}
-          />
-          <Route
-            path="/tasks/:taskId"
-            element={isAuthenticated ? <TaskDetails /> : <Navigate to="/login" replace />}
-          />
-          <Route
-            path="/tasks/:taskId/edit"
-            element={isAuthenticated ? <TaskForm /> : <Navigate to="/login" replace />}
           />
 
           {/* Guests */}

@@ -1,12 +1,12 @@
 // src/pages/ProjectForm.jsx
-import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { projectService } from '../services/projects';
-import { authService } from '../services/auth';
-import Layout from '../components/Layout/Layout';
-import { ArrowLeft, Save } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { projectService } from "../services/projects";
+import { authService } from "../services/auth";
+import Layout from "../components/Layout/Layout";
+import { ArrowLeft, Save } from "lucide-react";
 
-const defaultColor = '#3B82F6';
+const defaultColor = "#3B82F6";
 
 function isUserAdmin(project, userId) {
   if (!project || !userId) return false;
@@ -16,8 +16,11 @@ function isUserAdmin(project, userId) {
   const members = project.members || [];
   return members.some((m) => {
     const mid = m.user?._id || m.user;
-    const role = (m.role || '').toLowerCase();
-    return mid?.toString() === userId?.toString() && (role === 'admin' || role === 'owner');
+    const role = (m.role || "").toLowerCase();
+    return (
+      mid?.toString() === userId?.toString() &&
+      (role === "admin" || role === "owner")
+    );
   });
 }
 
@@ -30,22 +33,22 @@ const ProjectForm = () => {
   const [project, setProject] = useState(null);
 
   const [form, setForm] = useState({
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     color: defaultColor,
     isPublic: false,
   });
 
   const [loading, setLoading] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const canEdit = useMemo(() => isUserAdmin(project, me?._id), [project, me]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!token) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
 
@@ -53,7 +56,9 @@ const ProjectForm = () => {
     authService
       .getProfile()
       .then(setMe)
-      .catch(() => { /* ignore for now, backend will enforce */ });
+      .catch(() => {
+        /* ignore for now, backend will enforce */
+      });
 
     if (isEdit) {
       setLoading(true);
@@ -62,14 +67,14 @@ const ProjectForm = () => {
         .then((p) => {
           setProject(p);
           setForm({
-            name: p?.name || '',
-            description: p?.description || '',
+            name: p?.name || "",
+            description: p?.description || "",
             color: p?.color || defaultColor,
             isPublic: Boolean(p?.isPublic),
           });
         })
         .catch((err) => {
-          setError(err?.response?.data?.message || 'Failed to load project');
+          setError(err?.response?.data?.message || "Failed to load project");
         })
         .finally(() => setLoading(false));
     }
@@ -77,13 +82,16 @@ const ProjectForm = () => {
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    setError('');
+    setError("");
 
     try {
       if (isEdit) {
@@ -93,17 +101,44 @@ const ProjectForm = () => {
           return;
         }
         const updated = await projectService.updateProject(projectId, form);
-        navigate(`/projects/${updated._id || projectId}`);
+
+        // Normalize updated project ID: supports {data:{project}}, {project}, or direct object
+        const updatedProject =
+          updated?.data?.project || updated?.project || updated || null;
+        const updatedId =
+          updatedProject?._id || updatedProject?.id || projectId;
+
+        if (!updatedId) {
+          setError("Unexpected server response: no project ID returned.");
+          setSubmitting(false);
+          return;
+        }
+
+        navigate(`/projects/${updatedId}`);
       } else {
         const created = await projectService.createProject(form);
-        navigate(`/projects/${created._id}`);
+
+        // Normalize created project ID
+        const createdProject =
+          created?.data?.project || created?.project || created || null;
+        const newId = createdProject?._id || createdProject?.id;
+
+        if (!newId) {
+          setError("Unexpected server response: no project ID returned.");
+          setSubmitting(false);
+          return;
+        }
+
+        navigate(`/projects/${newId}`);
       }
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
-        (err?.response?.status === 403 ? 'Forbidden: only admins can update' : '') ||
+        (err?.response?.status === 403
+          ? "Forbidden: only admins can update"
+          : "") ||
         err?.message ||
-        'Save failed';
+        "Save failed";
       setError(msg);
     } finally {
       setSubmitting(false);
@@ -115,11 +150,14 @@ const ProjectForm = () => {
       <div className="max-w-2xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Link to={isEdit ? `/projects/${projectId}` : '/dashboard'} className="text-gray-600 hover:text-gray-900">
+            <Link
+              to={isEdit ? `/projects/${projectId}` : "/dashboard"}
+              className="text-gray-600 hover:text-gray-900"
+            >
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <h1 className="text-2xl font-bold">
-              {isEdit ? 'Edit Project' : 'Create Project'}
+              {isEdit ? "Edit Project" : "Create Project"}
             </h1>
           </div>
         </div>
@@ -139,7 +177,9 @@ const ProjectForm = () => {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Name</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Name
+              </label>
               <input
                 name="name"
                 type="text"
@@ -152,7 +192,9 @@ const ProjectForm = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Description
+              </label>
               <textarea
                 name="description"
                 rows={4}
@@ -165,7 +207,9 @@ const ProjectForm = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Color</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Color
+                </label>
                 <div className="mt-1 flex items-center space-x-3">
                   <input
                     name="color"
@@ -206,10 +250,10 @@ const ProjectForm = () => {
                 className="inline-flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
-                <span>{submitting ? 'Saving...' : 'Save'}</span>
+                <span>{submitting ? "Saving..." : "Save"}</span>
               </button>
               <Link
-                to={isEdit ? `/projects/${projectId}` : '/dashboard'}
+                to={isEdit ? `/projects/${projectId}` : "/dashboard"}
                 className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 Cancel

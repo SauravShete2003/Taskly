@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate , useParams  } from 'react-router-dom';
 import { Plus, Folder, CheckSquare, Users } from 'lucide-react';
 import { projectService } from '../services/projects';
 import Layout from '../components/Layout/Layout';
@@ -9,6 +9,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { projectId } = useParams();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -44,6 +45,8 @@ const Dashboard = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+
+              <Link to={`/projects/${projectId}/boards`}>View Boards</Link>
           <Link
             to="/projects/new"
             className="bg-blue-600 text-white px-4 py-2 rounded-md flex items-center space-x-2 hover:bg-blue-700"
