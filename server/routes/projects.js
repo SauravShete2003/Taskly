@@ -1,14 +1,14 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
-import { 
-  getProjects, 
-  getProjectById, 
-  createProject, 
-  updateProject, 
+import {
+  getProjects,
+  getProjectById,
+  createProject,
+  updateProject,
   deleteProject,
   addMember,
   removeMember,
-  updateMemberRole
+  updateMemberRole,
 } from '../controllers/projectController.js';
 import { projectValidation } from '../utils/validation.js';
 
@@ -17,16 +17,30 @@ const router = express.Router();
 // All routes require authentication
 router.use(authenticateToken);
 
-// Routes
+// Projects
 router.get('/', getProjects);
 router.post('/', projectValidation.create, createProject);
 router.get('/:projectId', projectValidation.projectId, getProjectById);
 router.put('/:projectId', projectValidation.projectId, projectValidation.update, updateProject);
 router.delete('/:projectId', projectValidation.projectId, deleteProject);
 
-// Member management
-router.post('/:projectId/members', projectValidation.projectId, addMember);
-router.delete('/:projectId/members/:userId', projectValidation.projectId, removeMember);
-router.put('/:projectId/members/:userId', projectValidation.projectId, updateMemberRole);
+// Members
+router.post(
+  '/:projectId/members',
+  projectValidation.memberAdd,
+  addMember
+);
 
-export default router; 
+router.delete(
+  '/:projectId/members/:userId',
+  projectValidation.memberParam,
+  removeMember
+);
+
+router.put(
+  '/:projectId/members/:userId',
+  projectValidation.memberParam.concat(projectValidation.memberRole),
+  updateMemberRole
+);
+
+export default router;

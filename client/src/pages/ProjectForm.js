@@ -1,4 +1,3 @@
-// src/pages/ProjectForm.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { projectService } from "../services/projects";
@@ -12,15 +11,11 @@ function isUserAdmin(project, userId) {
   if (!project || !userId) return false;
   const ownerId = project.owner?._id || project.owner;
   if (ownerId?.toString() === userId?.toString()) return true;
-
   const members = project.members || [];
   return members.some((m) => {
     const mid = m.user?._id || m.user;
     const role = (m.role || "").toLowerCase();
-    return (
-      mid?.toString() === userId?.toString() &&
-      (role === "admin" || role === "owner")
-    );
+    return mid?.toString() === userId?.toString() && (role === "admin" || role === "owner");
   });
 }
 
@@ -31,14 +26,12 @@ const ProjectForm = () => {
 
   const [me, setMe] = useState(null);
   const [project, setProject] = useState(null);
-
   const [form, setForm] = useState({
     name: "",
     description: "",
     color: defaultColor,
     isPublic: false,
   });
-
   const [loading, setLoading] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -52,13 +45,7 @@ const ProjectForm = () => {
       return;
     }
 
-    // Load current user
-    authService
-      .getProfile()
-      .then(setMe)
-      .catch(() => {
-        /* ignore for now, backend will enforce */
-      });
+    authService.getProfile().then(setMe).catch(() => {});
 
     if (isEdit) {
       setLoading(true);
@@ -78,6 +65,7 @@ const ProjectForm = () => {
         })
         .finally(() => setLoading(false));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit, projectId]);
 
   const onChange = (e) => {
@@ -101,42 +89,18 @@ const ProjectForm = () => {
           return;
         }
         const updated = await projectService.updateProject(projectId, form);
-
-        // Normalize updated project ID: supports {data:{project}}, {project}, or direct object
-        const updatedProject =
-          updated?.data?.project || updated?.project || updated || null;
-        const updatedId =
-          updatedProject?._id || updatedProject?.id || projectId;
-
-        if (!updatedId) {
-          setError("Unexpected server response: no project ID returned.");
-          setSubmitting(false);
-          return;
-        }
-
+        const updatedId = updated?._id || updated?.id || projectId;
         navigate(`/projects/${updatedId}`);
       } else {
         const created = await projectService.createProject(form);
-
-        // Normalize created project ID
-        const createdProject =
-          created?.data?.project || created?.project || created || null;
-        const newId = createdProject?._id || createdProject?.id;
-
-        if (!newId) {
-          setError("Unexpected server response: no project ID returned.");
-          setSubmitting(false);
-          return;
-        }
-
+        const newId = created?._id || created?.id;
+        if (!newId) throw new Error("Unexpected server response: no project ID returned.");
         navigate(`/projects/${newId}`);
       }
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
-        (err?.response?.status === 403
-          ? "Forbidden: only admins can update"
-          : "") ||
+        (err?.response?.status === 403 ? "Forbidden: only admins can update" : "") ||
         err?.message ||
         "Save failed";
       setError(msg);
@@ -150,15 +114,10 @@ const ProjectForm = () => {
       <div className="max-w-2xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Link
-              to={isEdit ? `/projects/${projectId}` : "/dashboard"}
-              className="text-gray-600 hover:text-gray-900"
-            >
+            <Link to={isEdit ? `/projects/${projectId}` : "/dashboard"} className="text-gray-600 hover:text-gray-900">
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <h1 className="text-2xl font-bold">
-              {isEdit ? "Edit Project" : "Create Project"}
-            </h1>
+            <h1 className="text-2xl font-bold">{isEdit ? "Edit Project" : "Create Project"}</h1>
           </div>
         </div>
 
@@ -170,16 +129,10 @@ const ProjectForm = () => {
           </div>
         ) : (
           <form onSubmit={onSubmit} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-                {error}
-              </div>
-            )}
+            {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">{error}</div>}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Name
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Name</label>
               <input
                 name="name"
                 type="text"
@@ -192,9 +145,7 @@ const ProjectForm = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Description
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Description</label>
               <textarea
                 name="description"
                 rows={4}
@@ -207,9 +158,7 @@ const ProjectForm = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Color
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Color</label>
                 <div className="mt-1 flex items-center space-x-3">
                   <input
                     name="color"
@@ -221,6 +170,7 @@ const ProjectForm = () => {
                   <input
                     name="color"
                     type="text"
+                    pattern="^#[0-9A-Fa-f]{6}$"
                     value={form.color || defaultColor}
                     onChange={onChange}
                     className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"

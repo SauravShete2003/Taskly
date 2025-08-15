@@ -1,4 +1,3 @@
-// src/pages/ProjectDetails.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
@@ -15,10 +14,7 @@ function isUserAdmin(project, userId) {
   return members.some((m) => {
     const mid = m.user?._id || m.user;
     const role = (m.role || "").toLowerCase();
-    return (
-      mid?.toString() === userId?.toString() &&
-      (role === "admin" || role === "owner")
-    );
+    return mid?.toString() === userId?.toString() && (role === "admin" || role === "owner");
   });
 }
 
@@ -43,10 +39,7 @@ const ProjectDetails = () => {
     const token = localStorage.getItem("token");
     if (!token) return navigate("/login");
 
-    authService
-      .getProfile()
-      .then(setMe)
-      .catch(() => {});
+    authService.getProfile().then(setMe).catch(() => {});
     loadProject();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
@@ -70,9 +63,7 @@ const ProjectDetails = () => {
 
   const handleDelete = async () => {
     if (!canDelete) return;
-    const ok = window.confirm(
-      "Are you sure you want to delete this project? This cannot be undone."
-    );
+    const ok = window.confirm("Are you sure you want to delete this project? This cannot be undone.");
     if (!ok) return;
 
     try {
@@ -119,9 +110,7 @@ const ProjectDetails = () => {
         {loading ? (
           <div className="py-8 text-center text-gray-600">Loading...</div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-            {error}
-          </div>
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">{error}</div>
         ) : project ? (
           <div className="space-y-6">
             <div className="bg-white shadow rounded-lg p-6">
@@ -133,13 +122,9 @@ const ProjectDetails = () => {
                       style={{ backgroundColor: project.color || "#E5E7EB" }}
                       title={project.color || "No color"}
                     />
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {project.name}
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
                   </div>
-                  <p className="text-gray-600 mt-1">
-                    {project.description || "No description"}
-                  </p>
+                  <p className="text-gray-600 mt-1">{project.description || "No description"}</p>
                 </div>
                 <div className="flex items-center space-x-3">
                   <span
@@ -163,16 +148,11 @@ const ProjectDetails = () => {
                 <div className="flex items-center justify-between border-b pb-2">
                   <div>
                     <div className="text-gray-900 font-medium">
-                      Owner:{" "}
-                      {project.owner?.name || project.owner?.email || "Owner"}
+                      Owner: {project.owner?.name || project.owner?.email || "Owner"}
                     </div>
-                    <div className="text-gray-500 text-sm">
-                      {project.owner?.email}
-                    </div>
+                    <div className="text-gray-500 text-sm">{project.owner?.email}</div>
                   </div>
-                  <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">
-                    owner
-                  </span>
+                  <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">owner</span>
                 </div>
 
                 {(project.members || []).length === 0 ? (
@@ -184,12 +164,8 @@ const ProjectDetails = () => {
                       className="flex items-center justify-between border-b last:border-b-0 pb-2 last:pb-0"
                     >
                       <div>
-                        <div className="text-gray-900 font-medium">
-                          {m.user?.name || m.user?.email || "Member"}
-                        </div>
-                        <div className="text-gray-500 text-sm">
-                          {m.user?.email}
-                        </div>
+                        <div className="text-gray-900 font-medium">{m.user?.name || m.user?.email || "Member"}</div>
+                        <div className="text-gray-500 text-sm">{m.user?.email}</div>
                       </div>
                       <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">
                         {(m.role || "member").toString().toLowerCase()}
