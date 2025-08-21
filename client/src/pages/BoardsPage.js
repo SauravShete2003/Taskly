@@ -1,133 +1,135 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import BoardCard from '../components/BoardCard';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { taskService } from '../services/tasks';
+import { unwrap } from '../utils/shape.ts';
+import { TASK_STATUSES } from '../constants/tasks';
+import TaskForm from '../components/TaskForm';
+import TaskCard from '../components/TaskCard';
 
-const BoardsPage = () => {
-  const { projectId } = useParams();
-  const [boards, setBoards] = useState([]);
+export default function BoardsPage() {
+  const { boardId } = useParams();
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [project, setProject] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState('');
 
-  // Dummy data for demonstration
-  const dummyBoards = [
-    {
-      id: 1,
-      title: "To Do",
-      description: "Tasks that need to be started",
-      color: "#FF6B6B",
-      taskCount: 5,
-      projectId: 1
-    },
-    {
-      id: 2,
-      title: "In Progress",
-      description: "Currently working on these tasks",
-      color: "#4ECDC4",
-      taskCount: 3,
-      projectId: 1
-    },
-    {
-      id: 3,
-      title: "Review",
-      description: "Tasks ready for review",
-      color: "#45B7D1",
-      taskCount: 2,
-      projectId: 1
-    },
-    {
-      id: 4,
-      title: "Done",
-      description: "Completed tasks",
-      color: "#96CEB4",
-      taskCount: 8,
-      projectId: 1
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      const payload = await taskService.getTasks(boardId);
+      const data = unwrap(payload);
+      setTasks(data.tasks || []);
+    } catch (e) {
+      setError(e?.response?.data?.message || e.message || 'Failed to load tasks');
+    } finally {
+      setLoading(false);
     }
-  ];
-
-  const dummyProject = {
-    id: 1,
-    name: "Website Redesign",
-    description: "Complete redesign of company website with modern UI/UX",
-    startDate: "2024-01-15",
-    endDate: "2024-03-30",
-    status: "active"
   };
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setBoards(dummyBoards);
-      setProject(dummyProject);
-      setLoading(false);
-    }, 1000);
-  }, [projectId]);
+    if (boardId) fetchTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardId]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  const grouped = useMemo(() => {
+    const map = {};
+    TASK_STATUSES.forEach(s => (map[s.key] = []));
+    for (const t of tasks) {
+      const key = t.status || 'todo';
+      if (!map[key]) map[key] = [];
+      map[key].push(t);
+    }
+    // sort by order then createdAt
+    Object.keys(map).forEach(k => {
+      map[k].sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || new Date(a.createdAt) - new Date(b.createdAt));
+    });
+    return map;
+  }, [tasks]);
+
+  const handleCreate = async (form) => {
+    try {
+      const payload = await taskService.createTask(boardId, form);
+      const data = unwrap(payload);
+      if (data.task) {
+        setTasks(prev => [...prev, data.task]);
+        setCreating(false);
+      } else {
+        await fetchTasks();
+      }
+    } catch (e) {
+      alert(e?.response?.data?.message || e.message);
+    }
+  };
+
+  const handleDelete = async (taskId) => {
+    const confirmed = window.confirm('Delete this task?');
+    if (!confirmed) return;
+    try {
+      await taskService.deleteTask(taskId);
+      setTasks(prev => prev.filter(t => t._id !== taskId));
+    } catch (e) {
+      alert(e?.response?.data?.message || e.message);
+    }
+  };
+
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      // Requires backend updateTask to accept 'status'
+      const payload = await taskService.updateTask(taskId, { status: newStatus });
+      const data = unwrap(payload);
+      const updated = data.task;
+      if (updated) {
+        setTasks(prev => prev.map(t => (t._id === taskId ? updated : t)));
+      } else {
+        await fetchTasks(); // fallback if shape differs
+      }
+    } catch (e) {
+      alert(e?.response?.data?.message || e.message);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Project Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
-              <p className="mt-2 text-gray-600">{project.description}</p>
-              <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500">
-                <span>Start: {project.startDate}</span>
-                <span>•</span>
-                <span>End: {project.endDate}</span>
-                <span>•</span>
-                <span className="capitalize font-medium text-green-600">{project.status}</span>
+    <div style={{ padding: 24 }}>
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h2>Board Tasks</h2>
+        <div>
+          {!creating ? (
+            <button onClick={() => setCreating(true)}>+ New Task</button>
+          ) : (
+            <button onClick={() => setCreating(false)}>Cancel</button>
+          )}
+        </div>
+      </header>
+
+      {creating && (
+        <div style={{ margin: '16px 0', border: '1px solid #ddd', padding: 16, borderRadius: 8 }}>
+          <TaskForm onSave={handleCreate} saving={false} />
+        </div>
+      )}
+
+      {loading && <p>Loading tasks...</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {!loading && !error && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+          {TASK_STATUSES.map((col) => (
+            <div key={col.key} style={{ background: '#fafafa', border: '1px solid #eee', borderRadius: 8, padding: 12 }}>
+              <h3 style={{ margin: '8px 0 12px' }}>{col.label}</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {grouped[col.key]?.map((task) => (
+                  <TaskCard
+                    key={task._id}
+                    task={task}
+                    onDelete={() => handleDelete(task._id)}
+                    onStatusChange={(s) => handleStatusChange(task._id, s)}
+                  />
+                ))}
+                {grouped[col.key]?.length === 0 && <div style={{ color: '#999', fontSize: 14 }}>No tasks</div>}
               </div>
             </div>
-            <Link
-              to={`/projects/${projectId}/boards/new`}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-            >
-              Add New Board
-            </Link>
-          </div>
-        </div>
-
-        {/* Boards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {boards.map((board) => (
-            <BoardCard
-              key={board.id}
-              board={board}
-              projectId={projectId}
-            />
           ))}
         </div>
-
-        {/* Empty State */}
-        {boards.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 mb-4">
-              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No boards yet</h3>
-            <p className="text-gray-600 mb-4">Get started by creating your first board</p>
-            <Link
-              to={`/projects/${projectId}/boards/new`}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-            >
-              Create Board
-            </Link>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
-};
-
-export default BoardsPage;
+}
