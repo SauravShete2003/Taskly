@@ -23,7 +23,7 @@ router.use(authenticateToken);
 // Current user (no ID required)
 router.get('/me', getCurrentUser);
 router.put('/me', userValidation.updateProfile, updateCurrentUser);
-router.put('/me/password', changePassword); // optional: add validation here
+router.put('/me/password', changePassword); 
 router.post('/me/avatar', avatarUpload, uploadAvatar);
 router.delete('/me', deleteCurrentUser);
 

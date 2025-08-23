@@ -1,4 +1,3 @@
-// src/pages/BoardTasks.jsx
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Layout from '../components/Layout/Layout';
@@ -28,11 +27,8 @@ const BoardTasks = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return navigate('/login');
-
-    // Load project for header context (owner + members if needed later)
     projectService.getProjectById(projectId).then(setProject).catch(() => {});
-    loadTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadTasks();   
   }, [projectId, boardId]);
 
   const loadTasks = async () => {

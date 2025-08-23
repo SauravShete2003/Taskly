@@ -29,7 +29,7 @@ export default function TaskDetailPage() {
 
   useEffect(() => {
     if (taskId) fetchTask();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  
   }, [taskId]);
 
   const handleSave = async (form) => {
