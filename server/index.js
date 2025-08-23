@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { createServer } from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 // Import configurations
 import connectDB from './config/database.js';
@@ -29,16 +30,36 @@ const server = createServer(app);
 // Connect to database
 connectDB();
 
+// Ensure upload directories exist (after __dirname is defined)
+const ensureUploadDirs = () => {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const uploadsDir = path.join(__dirname, 'uploads');
+  const avatarsDir = path.join(uploadsDir, 'avatars');
+
+  try {
+    fs.mkdirSync(avatarsDir, { recursive: true });
+    console.log('✅ Upload directories created successfully');
+  } catch (error) {
+    console.error('❌ Failed to create upload directories:', error.message);
+  }
+};
+
+// Call this after __dirname is properly defined
+ensureUploadDirs();
+
 // Setup WebSocket
 const io = setupSocket(server);
 
 // Middleware
 app.use(cors({
   origin: process.env.CLIENT_URL || "http://localhost:3000",
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -51,6 +72,7 @@ app.use('/api/tasks', taskRoutes);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const clientDir = path.resolve(__dirname, '../client');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(clientDir));
 
 // Health check endpoint

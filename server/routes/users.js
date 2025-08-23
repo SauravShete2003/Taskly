@@ -9,8 +9,11 @@ import {
   updateCurrentUser,
   deleteUser,
   deleteCurrentUser,
+  uploadAvatar,
+  changePassword,
 } from '../controllers/userController.js';
 import { userValidation, paginationValidation } from '../utils/validation.js';
+import { avatarUpload } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -20,6 +23,8 @@ router.use(authenticateToken);
 // Current user (no ID required)
 router.get('/me', getCurrentUser);
 router.put('/me', userValidation.updateProfile, updateCurrentUser);
+router.put('/me/password', changePassword); // optional: add validation here
+router.post('/me/avatar', avatarUpload, uploadAvatar);
 router.delete('/me', deleteCurrentUser);
 
 // Admin and ID-based operations

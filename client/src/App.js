@@ -8,6 +8,7 @@ import ProjectForm from './pages/ProjectForm';
 import ProjectDetails from './pages/ProjectDetails';
 import BoardTasks from './pages/BoardTasks';
 import BoardsPage from './pages/BoardsPage';
+import Profile from './pages/Profile';
 import './App.css';
 
 function App() {
@@ -53,6 +54,9 @@ function App() {
             path="/projects/:projectId/boards/:boardId"
             element={isAuthenticated ? <BoardTasks /> : <Navigate to="/login" replace />}
           />
+
+          {/* Profile */}
+          <Route path="/profile" element={isAuthenticated ? <Profile /> : <Navigate to="/login" replace />} />
 
           {/* Guests */}
           <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />} />

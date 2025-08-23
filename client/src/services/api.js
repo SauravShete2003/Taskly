@@ -46,5 +46,11 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+export const fileUrl = (maybeRelative) => {
+  if (!maybeRelative) return '';
+  if (maybeRelative.startsWith('http')) return maybeRelative;
+  const origin = API_BASE_URL.replace(/\/api\/?$/, '');
+  return `${origin}${maybeRelative}`;
+};
 
 export default api;
