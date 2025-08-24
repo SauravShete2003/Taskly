@@ -1,22 +1,32 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useParams, Link, Navigate } from 'react-router-dom';
 import {
-  getBoards, createBoard, deleteBoard, reorderBoards, updateBoard,
+  getBoards, createBoard, deleteBoard, reorderBoards, updateBoard, getBoardStats,
 } from '../services/boards';
 import BoardCard from '../components/BoardCard';
+import StatisticsCard from '../components/StatisticsCard';
 import Notification from '../components/Notification';
+import { CheckCircle, Clock, List, AlertCircle } from 'lucide-react';
 
 export default function EnhancedBoardsPage() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [boards, setBoards] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ name: '', description: '' });
   const [error, setError] = useState(null);
   const [notification, setNotification] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [projectStats, setProjectStats] = useState({
+    totalTasks: 0,
+    completedTasks: 0,
+    inProgressTasks: 0,
+    overdueTasks: 0,
+    completionRate: 0
+  });
 
   // Redirect if projectId is invalid
   if (!projectId || projectId === 'undefined') {
@@ -59,6 +69,37 @@ export default function EnhancedBoardsPage() {
       setLoading(false);
     }
   }, [projectId]);
+
+  const fetchProjectStats = useCallback(async () => {
+    try {
+      setStatsLoading(true);
+      // For now, we'll calculate stats from boards data
+      // In a real implementation, this would come from an API endpoint
+      const totalTasks = boards.reduce((sum, board) => sum + (board.taskCount || 0), 0);
+      const completedTasks = boards.reduce((sum, board) => sum + (board.completedTasks || 0), 0);
+      const inProgressTasks = boards.reduce((sum, board) => sum + (board.inProgressTasks || 0), 0);
+      const overdueTasks = boards.reduce((sum, board) => sum + (board.overdueTasks || 0), 0);
+      const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+      setProjectStats({
+        totalTasks,
+        completedTasks,
+        inProgressTasks,
+        overdueTasks,
+        completionRate
+      });
+    } catch (e) {
+      console.error('Failed to fetch project stats:', e);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, [boards]);
+
+  useEffect(() => {
+    if (boards.length > 0) {
+      fetchProjectStats();
+    }
+  }, [boards, fetchProjectStats]);
 
   useEffect(() => {
     if (projectId && projectId !== 'undefined') {
@@ -191,6 +232,42 @@ export default function EnhancedBoardsPage() {
             <div className="text-sm text-gray-500">
               {filteredBoards.length} board{filteredBoards.length !== 1 ? 's' : ''}
             </div>
+          </div>
+
+          {/* Statistics Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatisticsCard
+              title="Total Tasks"
+              value={projectStats.totalTasks}
+              subtitle="Across all boards"
+              icon={<List className="h-4 w-4" />}
+              color="blue"
+              loading={statsLoading}
+            />
+            <StatisticsCard
+              title="Completed"
+              value={projectStats.completedTasks}
+              subtitle={`${projectStats.completionRate}% completion rate`}
+              icon={<CheckCircle className="h-4 w-4" />}
+              color="green"
+              loading={statsLoading}
+            />
+            <StatisticsCard
+              title="In Progress"
+              value={projectStats.inProgressTasks}
+              subtitle="Tasks being worked on"
+              icon={<Clock className="h-4 w-4" />}
+              color="orange"
+              loading={statsLoading}
+            />
+            <StatisticsCard
+              title="Overdue"
+              value={projectStats.overdueTasks}
+              subtitle="Tasks past due date"
+              icon={<AlertCircle className="h-4 w-4" />}
+              color="red"
+              loading={statsLoading}
+            />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-6">

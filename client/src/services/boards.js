@@ -41,3 +41,10 @@ export const reorderBoards = async (boardOrders) => {
   const res = await http.put('/boards/reorder', { boardOrders });
   return unwrap(res);
 };
+
+// GET /boards/:boardId/stats
+export const getBoardStats = async (boardId) => {
+  const res = await http.get(`/boards/${boardId}/stats`);
+  const payload = unwrap(res);
+  return payload.stats || {};
+};
