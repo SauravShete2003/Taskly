@@ -7,7 +7,7 @@ import Register from './pages/Register';
 import ProjectForm from './pages/ProjectForm';
 import ProjectDetails from './pages/ProjectDetails';
 import BoardTasks from './pages/BoardTasks';
-import BoardsPage from './pages/BoardsPage';
+import EnhancedBoardsPage from './pages/EnhancedBoardsPage';
 import Profile from './pages/Profile';
 import './App.css';
 
@@ -46,7 +46,7 @@ function App() {
           {/* Boards */}
           <Route
             path="/projects/:projectId/boards"
-            element={isAuthenticated ? <BoardsPage /> : <Navigate to="/login" replace />}
+            element={isAuthenticated ? <EnhancedBoardsPage /> : <Navigate to="/login" replace />}
           />
 
           {/* Board Tasks + Task CRUD */}

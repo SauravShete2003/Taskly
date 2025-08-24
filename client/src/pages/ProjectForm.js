@@ -1,73 +1,47 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { projectService } from "../services/projects";
-import { authService } from "../services/auth";
-import Layout from "../components/Layout/Layout";
-import { ArrowLeft, Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import  api from "../services/api";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "../components/ui/toast";
 
-const defaultColor = "#3B82F6";
+const defaultColor = "#3bf796";
 
-function isUserAdmin(project, userId) {
-  if (!project || !userId) return false;
-  const ownerId = project.owner?._id || project.owner;
-  if (ownerId?.toString() === userId?.toString()) return true;
-  const members = project.members || [];
-  return members.some((m) => {
-    const mid = m.user?._id || m.user;
-    const role = (m.role || "").toLowerCase();
-    return mid?.toString() === userId?.toString() && (role === "admin" || role === "owner");
-  });
-}
-
-const ProjectForm = () => {
-  const { projectId } = useParams();
-  const isEdit = Boolean(projectId);
+export default function ProjectForm({ isEdit = false, projectId }) {
+  const { toast } = useToast();
   const navigate = useNavigate();
-
-  const [me, setMe] = useState(null);
-  const [project, setProject] = useState(null);
   const [form, setForm] = useState({
     name: "",
     description: "",
     color: defaultColor,
     isPublic: false,
+    priority: "low", // ✅ added default
   });
-  const [loading, setLoading] = useState(isEdit);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const canEdit = useMemo(() => isUserAdmin(project, me?._id), [project, me]);
-
+  // ✅ Load existing project if edit mode
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
-    authService.getProfile().then(setMe).catch(() => {});
-
-    if (isEdit) {
-      setLoading(true);
-      projectService
-        .getProjectById(projectId)
-        .then((p) => {
-          setProject(p);
+    if (isEdit && projectId) {
+      api
+        .request(`/projects/${projectId}`)
+        .then((data) => {
           setForm({
-            name: p?.name || "",
-            description: p?.description || "",
-            color: p?.color || defaultColor,
-            isPublic: Boolean(p?.isPublic),
+            name: data.name || "",
+            description: data.description || "",
+            color: data.color || defaultColor,
+            isPublic: data.isPublic || false,
+            priority: data.priority || "low", // ✅ prefill priority
           });
         })
-        .catch((err) => {
-          setError(err?.response?.data?.message || "Failed to load project");
-        })
-        .finally(() => setLoading(false));
+        .catch(() => {
+          toast({
+            title: "Error",
+            description: "Failed to load project details",
+            variant: "destructive",
+          });
+        });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit, projectId]);
+  }, [isEdit, projectId, toast]);
 
+  // ✅ handle input change
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({
@@ -76,144 +50,119 @@ const ProjectForm = () => {
     }));
   };
 
+  // ✅ handle submit
   const onSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
-    setError("");
-
+    setLoading(true);
     try {
-      if (isEdit) {
-        if (!canEdit) {
-          setError("You don't have permission to edit this project.");
-          setSubmitting(false);
-          return;
-        }
-        const updated = await projectService.updateProject(projectId, form);
-        const updatedId = updated?._id || updated?.id || projectId;
-        navigate(`/projects/${updatedId}`);
-      } else {
-        const created = await projectService.createProject(form);
-        const newId = created?._id || created?.id;
-        if (!newId) throw new Error("Unexpected server response: no project ID returned.");
-        navigate(`/projects/${newId}`);
-      }
+      const url = isEdit ? `/projects/${projectId}` : "/projects";
+      const method = isEdit ? "PUT" : "POST";
+      await api.request(url, {
+        method,
+        body: JSON.stringify(form),
+        headers: { "Content-Type": "application/json" },
+      });
+      toast({
+        title: "Success",
+        description: `Project ${isEdit ? "updated" : "created"} successfully`,
+      });
+      navigate("/projects");
     } catch (err) {
-      const msg =
-        err?.response?.data?.message ||
-        (err?.response?.status === 403 ? "Forbidden: only admins can update" : "") ||
-        err?.message ||
-        "Save failed";
-      setError(msg);
+      toast({
+        title: "Error",
+        description: err.message || "Failed to save project",
+        variant: "destructive",
+      });
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
-    <Layout>
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Link to={isEdit ? `/projects/${projectId}` : "/dashboard"} className="text-gray-600 hover:text-gray-900">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <h1 className="text-2xl font-bold">{isEdit ? "Edit Project" : "Create Project"}</h1>
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="py-8 text-center text-gray-600">Loading...</div>
-        ) : isEdit && !canEdit ? (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-md">
-            You don’t have permission to edit this project.
-          </div>
-        ) : (
-          <form onSubmit={onSubmit} className="space-y-6">
-            {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">{error}</div>}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Name</label>
-              <input
-                name="name"
-                type="text"
-                required
-                value={form.name}
-                onChange={onChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Project name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                name="description"
-                rows={4}
-                value={form.description}
-                onChange={onChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="What is this project about?"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Color</label>
-                <div className="mt-1 flex items-center space-x-3">
-                  <input
-                    name="color"
-                    type="color"
-                    value={form.color || defaultColor}
-                    onChange={onChange}
-                    className="h-10 w-16 p-0 border border-gray-300 rounded"
-                  />
-                  <input
-                    name="color"
-                    type="text"
-                    pattern="^#[0-9A-Fa-f]{6}$"
-                    value={form.color || defaultColor}
-                    onChange={onChange}
-                    className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2 mt-6 md:mt-0">
-                <input
-                  id="isPublic"
-                  name="isPublic"
-                  type="checkbox"
-                  checked={form.isPublic}
-                  onChange={onChange}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-                />
-                <label htmlFor="isPublic" className="text-sm text-gray-700">
-                  Make project public
-                </label>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="inline-flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
-              >
-                <Save className="h-4 w-4" />
-                <span>{submitting ? "Saving..." : "Save"}</span>
-              </button>
-              <Link
-                to={isEdit ? `/projects/${projectId}` : "/dashboard"}
-                className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </Link>
-            </div>
-          </form>
-        )}
+    <form
+      onSubmit={onSubmit}
+      className="space-y-6 bg-white p-6 rounded-lg shadow-md"
+    >
+      {/* Project Name */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          Project Name
+        </label>
+        <input
+          type="text"
+          name="name"
+          value={form.name}
+          onChange={onChange}
+          required
+          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+        />
       </div>
-    </Layout>
-  );
-};
 
-export default ProjectForm;
+      {/* Description */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          Description
+        </label>
+        <textarea
+          name="description"
+          value={form.description}
+          onChange={onChange}
+          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      {/* Color */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Color</label>
+        <input
+          type="color"
+          name="color"
+          value={form.color}
+          onChange={onChange}
+          className="mt-1 h-10 w-16 border-0"
+        />
+      </div>
+
+      {/* Public checkbox */}
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          name="isPublic"
+          checked={form.isPublic}
+          onChange={onChange}
+          className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+        />
+        <label className="ml-2 block text-sm text-gray-700">Public</label>
+      </div>
+
+      {/* ✅ Priority Selector */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          Priority
+        </label>
+        <select
+          name="priority"
+          value={form.priority}
+          onChange={onChange}
+          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="urgent">Urgent</option>
+        </select>
+      </div>
+
+      {/* Submit */}
+      <div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-md shadow hover:bg-blue-700 focus:outline-none disabled:opacity-50"
+        >
+          {loading ? "Saving..." : isEdit ? "Update Project" : "Create Project"}
+        </button>
+      </div>
+    </form>
+  );
+}

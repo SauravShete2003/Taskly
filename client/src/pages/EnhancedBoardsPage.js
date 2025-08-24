@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useParams, Link, Navigate } from 'react-router-dom';
 import {
-  getBoards, createBoard, deleteBoard, reorderBoards, updateBoard, getBoardStats,
+  getBoards, createBoard, deleteBoard, reorderBoards, updateBoard,
 } from '../services/boards';
 import BoardCard from '../components/BoardCard';
 import StatisticsCard from '../components/StatisticsCard';
@@ -19,7 +19,6 @@ export default function EnhancedBoardsPage() {
   const [error, setError] = useState(null);
   const [notification, setNotification] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
   const [projectStats, setProjectStats] = useState({
     totalTasks: 0,
     completedTasks: 0,
@@ -28,10 +27,7 @@ export default function EnhancedBoardsPage() {
     completionRate: 0
   });
 
-  // Redirect if projectId is invalid
-  if (!projectId || projectId === 'undefined') {
-    return <Navigate to="/dashboard" replace />;
-  }
+  const isInvalidProjectId = !projectId || projectId === 'undefined';
 
   const showNotification = (message, type = 'info') => {
     setNotification({ message, type });
@@ -73,8 +69,6 @@ export default function EnhancedBoardsPage() {
   const fetchProjectStats = useCallback(async () => {
     try {
       setStatsLoading(true);
-      // For now, we'll calculate stats from boards data
-      // In a real implementation, this would come from an API endpoint
       const totalTasks = boards.reduce((sum, board) => sum + (board.taskCount || 0), 0);
       const completedTasks = boards.reduce((sum, board) => sum + (board.completedTasks || 0), 0);
       const inProgressTasks = boards.reduce((sum, board) => sum + (board.inProgressTasks || 0), 0);
@@ -178,6 +172,10 @@ export default function EnhancedBoardsPage() {
       showNotification(e?.response?.data?.message || 'Failed to save order', 'error');
     }
   };
+
+  if (isInvalidProjectId) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   if (loading) {
     return (

@@ -75,7 +75,7 @@ const Dashboard = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((project) => {
-              const membersCount = 1 + (project.members?.length || 0); // owner + members
+              const membersCount = 1 + (project.members?.length || 0); 
               return (
                 <div
                   key={project._id || project.id}

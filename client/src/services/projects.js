@@ -37,7 +37,6 @@ export const projectService = {
   addMember: async (projectId, userId, role = 'member') => {
     const res = await api.post(`/projects/${projectId}/members`, { userId, role });
     return extractProject(res);
-    // or return full project for UI to re-render members
   },
 
   removeMember: async (projectId, userId) => {
