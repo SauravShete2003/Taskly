@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import  api from "../services/api";
+import { projectService } from "../services/projects";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ui/toast";
 
@@ -13,22 +13,21 @@ export default function ProjectForm({ isEdit = false, projectId }) {
     description: "",
     color: defaultColor,
     isPublic: false,
-    priority: "low", // ✅ added default
+    priority: "low", 
   });
   const [loading, setLoading] = useState(false);
 
-  // ✅ Load existing project if edit mode
   useEffect(() => {
     if (isEdit && projectId) {
-      api
-        .request(`/projects/${projectId}`)
+      projectService
+        .getProjectById(projectId)
         .then((data) => {
           setForm({
             name: data.name || "",
             description: data.description || "",
             color: data.color || defaultColor,
             isPublic: data.isPublic || false,
-            priority: data.priority || "low", // ✅ prefill priority
+            priority: data.priority || "low",
           });
         })
         .catch(() => {
@@ -54,14 +53,22 @@ export default function ProjectForm({ isEdit = false, projectId }) {
   const onSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      const url = isEdit ? `/projects/${projectId}` : "/projects";
-      const method = isEdit ? "PUT" : "POST";
-      await api.request(url, {
-        method,
-        body: JSON.stringify(form),
-        headers: { "Content-Type": "application/json" },
+    if (!form.name.trim() || form.name.length < 1 || form.name.length > 100) {
+      toast({
+        title: "Validation Error",
+        description: "Project name must be between 1 and 100 characters",
+        variant: "destructive",
       });
+      setLoading(false);
+      return;
+    }
+    try {
+      const { priority, ...formData } = form; 
+      if (isEdit) {
+        await projectService.updateProject(projectId, formData);
+      } else {
+        await projectService.createProject(formData);
+      }
       toast({
         title: "Success",
         description: `Project ${isEdit ? "updated" : "created"} successfully`,

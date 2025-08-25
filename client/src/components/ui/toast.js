@@ -1,6 +1,4 @@
 import { useState, createContext, useContext } from "react";
-
-// Context for toast messages
 const ToastContext = createContext();
 
 export const ToastProvider = ({ children }) => {

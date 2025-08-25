@@ -43,26 +43,21 @@ function App() {
           <Route path="/projects/:projectId" element={isAuthenticated ? <ProjectDetails /> : <Navigate to="/login" replace />} />
           <Route path="/projects/:projectId/edit" element={isAuthenticated ? <ProjectForm /> : <Navigate to="/login" replace />} />
 
-          {/* Boards */}
           <Route
             path="/projects/:projectId/boards"
             element={isAuthenticated ? <EnhancedBoardsPage /> : <Navigate to="/login" replace />}
           />
 
-          {/* Board Tasks + Task CRUD */}
           <Route
             path="/projects/:projectId/boards/:boardId"
             element={isAuthenticated ? <BoardTasks /> : <Navigate to="/login" replace />}
           />
 
-          {/* Profile */}
           <Route path="/profile" element={isAuthenticated ? <Profile /> : <Navigate to="/login" replace />} />
 
-          {/* Guests */}
           <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />} />
           <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/dashboard" replace />} />
 
-          {/* Fallback */}
           <Route path="*" element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />} />
         </Routes>
       </div>
