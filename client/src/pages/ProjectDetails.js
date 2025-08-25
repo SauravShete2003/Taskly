@@ -175,6 +175,9 @@ const ProjectDetails = () => {
                 )}
               </div>
             </div>
+            <Link to={`/projects/${projectId}/boards`} className="text-blue-600 hover:text-blue-800">
+              View Boards
+            </Link>
           </div>
         ) : null}
       </div>

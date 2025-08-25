@@ -1,50 +1,49 @@
-import http from './http';
+import api from './api';
 
-const unwrap = (res) => res?.data?.data ?? res?.data ?? {};
+const unwrap = (res) => res?.data ?? {};
 
-// GET /boards/project/:projectId
 export const getBoards = async (projectId) => {
-  const res = await http.get(`/boards/project/${projectId}`);
+  const res = await api.get(`/boards/projects/${projectId}`);
   const payload = unwrap(res);
   return payload.boards ?? [];
 };
 
-// POST /boards/project/:projectId
+// POST /boards/projects/:projectId
 export const createBoard = async (projectId, input) => {
-  const res = await http.post(`/boards/project/${projectId}`, input);
+  const res = await api.post(`/boards/projects/${projectId}`, input);
   const payload = unwrap(res);
   return payload.board;
 };
 
 // GET /boards/:boardId
 export const getBoard = async (boardId) => {
-  const res = await http.get(`/boards/${boardId}`);
+  const res = await api.get(`/boards/${boardId}`);
   const payload = unwrap(res);
   return payload.board;
 };
 
 // PUT /boards/:boardId
 export const updateBoard = async (boardId, input) => {
-  const res = await http.put(`/boards/${boardId}`, input);
+  const res = await api.put(`/boards/${boardId}`, input);
   const payload = unwrap(res);
   return payload.board;
 };
 
 // DELETE /boards/:boardId
 export const deleteBoard = async (boardId) => {
-  await http.delete(`/boards/${boardId}`);
+  await api.delete(`/boards/${boardId}`);
   return true;
 };
 
 // PUT /boards/reorder
 export const reorderBoards = async (boardOrders) => {
-  const res = await http.put('/boards/reorder', { boardOrders });
+  const res = await api.put('/boards/reorder', { boardOrders });
   return unwrap(res);
 };
 
 // GET /boards/:boardId/stats
 export const getBoardStats = async (boardId) => {
-  const res = await http.get(`/boards/${boardId}/stats`);
+  const res = await api.get(`/boards/${boardId}/stats`);
   const payload = unwrap(res);
   return payload.stats || {};
 };
