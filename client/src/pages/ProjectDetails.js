@@ -44,7 +44,8 @@ const ProjectDetails = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
-  const loadProject = async () => {
+const loadProject = async () => {
+    console.log("Fetching project data...");
     setLoading(true);
     setError("");
     try {
@@ -175,7 +176,7 @@ const ProjectDetails = () => {
                 )}
               </div>
             </div>
-            <Link to={`/projects/${projectId}/boards`} className="text-blue-600 hover:text-blue-800">
+            <Link to={`/projects/${projectId}/boards`} className="text-blue-600 hover:text-blue-800" onClick={() => console.log("Navigating to boards")}>
               View Boards
             </Link>
           </div>

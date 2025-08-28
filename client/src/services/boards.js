@@ -1,49 +1,42 @@
-import api from './api';
+// client/src/services/boardService.js
+import api from "./api.js";  // axios instance with token handling
 
 const unwrap = (res) => res?.data ?? {};
 
+// ✅ Fetch all boards for a project
 export const getBoards = async (projectId) => {
-  const res = await api.get(`/boards/projects/${projectId}`);
-  const payload = unwrap(res);
-  return payload.boards ?? [];
+  const res = await api.get(`/projects/${projectId}/boards`);
+  return res.data?.data?.boards || [];
 };
 
-// POST /boards/projects/:projectId
-export const createBoard = async (projectId, input) => {
-  const res = await api.post(`/boards/projects/${projectId}`, input);
-  const payload = unwrap(res);
-  return payload.board;
+// ✅ Create a new board
+export const createBoard = async (projectId, boardData) => {
+  const res = await api.post(`/projects/${projectId}/boards`, boardData);
+  return res.data?.data;
 };
 
-// GET /boards/:boardId
-export const getBoard = async (boardId) => {
-  const res = await api.get(`/boards/${boardId}`);
-  const payload = unwrap(res);
-  return payload.board;
+// ✅ Update an existing board
+export const updateBoard = async (boardId, updates) => {
+  const res = await api.put(`/boards/${boardId}`, updates);
+  return res.data?.data;
 };
 
-// PUT /boards/:boardId
-export const updateBoard = async (boardId, input) => {
-  const res = await api.put(`/boards/${boardId}`, input);
-  const payload = unwrap(res);
-  return payload.board;
-};
-
-// DELETE /boards/:boardId
+// ✅ Delete a board
 export const deleteBoard = async (boardId) => {
-  await api.delete(`/boards/${boardId}`);
-  return true;
+  const res = await api.delete(`/boards/${boardId}`);
+  return res.data?.data;
 };
 
-// PUT /boards/reorder
+// ✅ Reorder boards
 export const reorderBoards = async (boardOrders) => {
-  const res = await api.put('/boards/reorder', { boardOrders });
-  return unwrap(res);
+  const res = await api.put("/boards/reorder", { boardOrders });
+  const payload = unwrap(res);
+  return payload.data ?? {};
 };
 
-// GET /boards/:boardId/stats
+// ✅ Get board stats
 export const getBoardStats = async (boardId) => {
   const res = await api.get(`/boards/${boardId}/stats`);
   const payload = unwrap(res);
-  return payload.stats || {};
+  return payload.data?.stats || {};
 };

@@ -3,12 +3,11 @@ import api from './api';
 const unwrap = (res) => res?.data ?? {};
 
 export const taskService = {
-  getTasks: async (boardId) => {
-    const response = await api.get(`/tasks/board/${boardId}`);
-    const payload = unwrap(response);
-    return payload.tasks ?? [];
-  },
-
+getTasks: async (boardId) => {
+  const response = await api.get(`/tasks/board/${boardId}`);
+  const payload = unwrap(response);
+  return payload  
+},
   getTaskById: async (taskId) => {
     const response = await api.get(`/tasks/${taskId}`);
     const payload = unwrap(response);
