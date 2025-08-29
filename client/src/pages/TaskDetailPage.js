@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { taskService } from '../services/taskService';
-import { unwrap } from '../utils/shape';
-import TaskForm from '../components/tasks/TaskForm';
-import CommentList from '../components/comments/CommentList';
-import CommentInput from '../components/comments/CommentInput';
+import taskService from '../services/tasks';
+import { unwrap } from '../utils/shape.ts';
+import TaskForm from '../components/TaskForm';
+import CommentList from '../components/CommentList';
+import CommentInput from '../components/CommentInput';
 import { TASK_PRIORITIES, TASK_STATUSES } from '../constants/tasks';
+import Notification from '../components/Notification';
 
 export default function TaskDetailPage() {
   const { taskId } = useParams();
@@ -13,14 +14,25 @@ export default function TaskDetailPage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState('');
+  const [notification, setNotification] = useState({ message: '', type: 'info', visible: false });
+
+  const showNotification = (message, type = 'info') => {
+    setNotification({ message, type, visible: true });
+    setTimeout(() => {
+      setNotification({ ...notification, visible: false });
+    }, 3000);
+  };
 
   const fetchTask = async () => {
     try {
+      console.log('Fetching task with ID:', taskId);
       setLoading(true);
       const payload = await taskService.getTaskById(taskId);
+      console.log('Fetched task payload:', payload);
       const data = unwrap(payload);
       setTask(data.task || data);
     } catch (e) {
+      console.error('Error fetching task:', e);
       setError(e?.response?.data?.message || e.message);
     } finally {
       setLoading(false);
@@ -28,9 +40,9 @@ export default function TaskDetailPage() {
   };
 
   useEffect(() => {
+    console.log('TaskDetailPage useEffect triggered with taskId:', taskId);
     if (taskId) fetchTask();
-  
-  }, [taskId]);
+  }, [taskId, fetchTask]);
 
   const handleSave = async (form) => {
     try {
@@ -38,8 +50,9 @@ export default function TaskDetailPage() {
       const data = unwrap(payload);
       setTask(data.task || data);
       setEditing(false);
+      showNotification('Task updated successfully!', 'success');
     } catch (e) {
-      alert(e?.response?.data?.message || e.message);
+      showNotification(e?.response?.data?.message || e.message || 'Failed to update task', 'error');
     }
   };
 
@@ -48,8 +61,9 @@ export default function TaskDetailPage() {
       const payload = await taskService.addComment(taskId, { content });
       const data = unwrap(payload);
       setTask(data.task || data);
+      showNotification('Comment added successfully!', 'success');
     } catch (e) {
-      alert(e?.response?.data?.message || e.message);
+      showNotification(e?.response?.data?.message || e.message || 'Failed to add comment', 'error');
     }
   };
 
@@ -58,8 +72,9 @@ export default function TaskDetailPage() {
       const payload = await taskService.removeComment(taskId, commentId);
       const data = unwrap(payload);
       setTask(data.task || data);
+      showNotification('Comment removed successfully!', 'success');
     } catch (e) {
-      alert(e?.response?.data?.message || e.message);
+      showNotification(e?.response?.data?.message || e.message || 'Failed to remove comment', 'error');
     }
   };
 
@@ -72,6 +87,9 @@ export default function TaskDetailPage() {
 
   return (
     <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
+      {notification.visible && (
+        <Notification message={notification.message} type={notification.type} />
+      )}
       <div style={{ marginBottom: 12 }}>
         <Link to={`/boards/${task.board?._id || task.board}/tasks`}>&larr; Back to board</Link>
       </div>
@@ -107,8 +125,7 @@ export default function TaskDetailPage() {
               description: task.description || '',
               priority: task.priority || 'medium',
               dueDate: task.dueDate ? task.dueDate.slice(0, 10) : '',
-              // You can add status here if your backend supports it:
-              // status: task.status,
+              
             }}
             onSave={handleSave}
           />

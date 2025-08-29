@@ -2,52 +2,50 @@ import api from './api';
 
 const unwrap = (res) => res?.data ?? {};
 
-export const taskService = {
-getTasks: async (boardId) => {
-  const response = await api.get(`/tasks/board/${boardId}`);
-  const payload = unwrap(response);
-  return payload  
-},
+const taskService = {
+  getTasks: async (boardId) => {
+    const response = await api.get(`/tasks/board/${boardId}`);
+    return unwrap(response);
+  },
   getTaskById: async (taskId) => {
     const response = await api.get(`/tasks/${taskId}`);
-    const payload = unwrap(response);
-    return payload.task;
+    return unwrap(response).task;
   },
-
   createTask: async (boardId, taskData) => {
-    const response = await api.post(`/tasks/board/${boardId}`, taskData);
-    const payload = unwrap(response);
-    return payload.task;
+    try {
+      console.log('Making API call to create task:', { boardId, taskData });
+      const response = await api.post(`/tasks/board/${boardId}`, taskData);
+      console.log('API response:', response);
+      console.log('Response data:', response.data);
+      const result = unwrap(response);
+      console.log('Unwrapped result:', result);
+      console.log('Result data property:', result.data);
+      console.log('Result task property:', result.task);
+      return result.data || result.task || result;
+    } catch (error) {
+      console.error('Error in createTask service:', error);
+      throw error;
+    }
   },
-
   updateTask: async (taskId, taskData) => {
     const response = await api.put(`/tasks/${taskId}`, taskData);
-    const payload = unwrap(response);
-    return payload.task;
+    return unwrap(response).task;
   },
-
   deleteTask: async (taskId) => {
     const response = await api.delete(`/tasks/${taskId}`);
-    const payload = unwrap(response);
-    return payload;
+    return unwrap(response);
   },
-
   moveTask: async (taskId, moveData) => {
     const response = await api.put(`/tasks/${taskId}/move`, moveData);
-    const payload = unwrap(response);
-    return payload;
+    return unwrap(response);
   },
-
   addComment: async (taskId, commentData) => {
     const response = await api.post(`/tasks/${taskId}/comments`, commentData);
-    const payload = unwrap(response);
-    return payload.comment;
+    return unwrap(response).comment;
   },
-
   removeComment: async (taskId, commentId) => {
     const response = await api.delete(`/tasks/${taskId}/comments/${commentId}`);
-    const payload = unwrap(response);
-    return payload;
+    return unwrap(response);
   },
 };
 

@@ -23,6 +23,23 @@ export default function ProjectBoardsPage() {
     if (projectId) loadBoards();
   }, [projectId]);
 
+  // Simple loading spinner
+  const LoadingSpinner = () => (
+    <div style={{ display: 'flex', justifyContent: 'center', padding: '24px' }}>
+      <div className="spinner-border" role="status">
+        <span className="sr-only">Loading...</span>
+      </div>
+    </div>
+  );
+
+  // Empty state component
+  const EmptyState = () => (
+    <div style={{ textAlign: 'center', padding: '24px' }}>
+      <p>No boards available for this project.</p>
+      <p>Start by creating a new board!</p>
+    </div>
+  );
+
   return (
     <div style={{ padding: 24 }}>
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>

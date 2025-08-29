@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Layout from '../components/Layout/Layout';
-import  tasksService  from '../services/tasks';
+import taskService from '../services/tasks';
 import { projectService } from '../services/projects';
 import { Plus, Pencil, Trash2, Eye, Flag, Calendar, ArrowLeft } from 'lucide-react';
 
@@ -20,22 +20,14 @@ const BoardTasks = () => {
   const { projectId, boardId } = useParams();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
-  const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return navigate('/login');
-    projectService.getProjectById(projectId).then(setProject).catch(() => {});
-    loadTasks();   
-  }, [projectId, boardId]);
-
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async () => {
     setLoading(true);
     setErr('');
     try {
-      const list = await tasksService.getTasks(boardId);
+      const list = await taskService.getTasks(boardId); // ✅ use unified service
       setTasks(Array.isArray(list) ? list : []);
     } catch (e) {
       const msg = e?.response?.data?.message || (e?.response?.status === 403 ? 'Access denied' : 'Failed to load tasks');
@@ -43,16 +35,22 @@ const BoardTasks = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [boardId]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return navigate('/login');
+    loadTasks();   
+  }, [projectId, boardId, loadTasks, navigate]);
 
   const onDelete = async (taskId) => {
     const ok = window.confirm('Delete this task? This cannot be undone.');
     if (!ok) return;
     try {
-      await tasksService.deleteTask(taskId);
+      await taskService.deleteTask(taskId); // ✅ unified service
       setTasks((prev) => prev.filter((t) => (t._id || t.id) !== taskId));
     } catch (e) {
-      alert(e?.response?.data?.message || 'Delete failed');
+      setErr(e?.response?.data?.message || 'Delete failed');
     }
   };
 
@@ -66,8 +64,9 @@ const BoardTasks = () => {
             </Link>
             <h1 className="text-2xl font-bold">Board Tasks</h1>
           </div>
+          {/* ✅ Fixed create-task link */}
           <Link
-            to={`/projects/${projectId}/boards/${boardId}/tasks/new`}
+            to={`/tasks/board/${boardId}/new`}
             className="bg-blue-600 text-white px-4 py-2 rounded-md inline-flex items-center space-x-2 hover:bg-blue-700"
           >
             <Plus className="h-5 w-5" />
@@ -82,8 +81,9 @@ const BoardTasks = () => {
         ) : tasks.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-600 mb-4">No tasks on this board yet.</p>
+            {/* ✅ Same create-task link */}
             <Link
-              to={`/projects/${projectId}/boards/${boardId}/tasks/new`}
+              to={`/tasks/board/${boardId}/new`}
               className="bg-blue-600 text-white px-4 py-2 rounded-md inline-flex items-center space-x-2 hover:bg-blue-700"
             >
               <Plus className="h-5 w-5" />
@@ -123,8 +123,9 @@ const BoardTasks = () => {
                       >
                         <Eye className="h-4 w-4 mr-1" /> View
                       </Link>
+                      {/* ✅ Edit now goes to detail page (TaskDetailPage handles editing) */}
                       <Link
-                        to={`/tasks/${id}/edit`}
+                        to={`/tasks/${id}`}
                         className="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
                       >
                         <Pencil className="h-4 w-4 mr-1" /> Edit

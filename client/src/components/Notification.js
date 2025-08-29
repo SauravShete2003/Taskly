@@ -1,32 +1,31 @@
-import React, { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
-export default function Notification({ message, type = 'info', onClose }) {
+const Notification = ({ message, type = 'info', duration = 3000, onClose }) => {
+  const [visible, setVisible] = useState(true);
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      onClose();
-    }, 5000);
-    
-    return () => clearTimeout(timer);
-  }, [onClose]);
+      setVisible(false);
+      if (onClose) onClose();
+    }, duration);
 
-  const bgColor = {
-    success: 'bg-green-500',
-    error: 'bg-red-500',
-    warning: 'bg-yellow-500',
-    info: 'bg-blue-500'
-  }[type];
+    return () => clearTimeout(timer);
+  }, [duration, onClose]);
+
+  if (!visible) return null;
+
+  const styles = {
+    info: 'bg-blue-100 border-blue-500 text-blue-700',
+    success: 'bg-green-100 border-green-500 text-green-700',
+    warning: 'bg-yellow-100 border-yellow-500 text-yellow-700',
+    error: 'bg-red-100 border-red-500 text-red-700',
+  };
 
   return (
-    <div className={`fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-in`}>
-      <div className="flex items-center justify-between">
-        <span>{message}</span>
-        <button
-          onClick={onClose}
-          className="ml-4 text-white hover:text-gray-200"
-        >
-          ×
-        </button>
-      </div>
+    <div className={`border-l-4 p-4 ${styles[type]}`} role="alert">
+      <p>{message}</p>
     </div>
   );
-}
+};
+
+export default Notification;
