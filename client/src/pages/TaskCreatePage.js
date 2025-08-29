@@ -1,61 +1,56 @@
-import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import TaskForm from '../components/TaskForm';
-import taskService from '../services/tasks';
-import Notification from '../components/Notification';
+import { useState } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import TaskForm from "../components/TaskForm";
+import taskService from "../services/tasks";
+import { ArrowLeft } from "lucide-react";
 
 export default function TaskCreatePage() {
   const { boardId } = useParams();
   const navigate = useNavigate();
-  const [notification, setNotification] = useState({ message: '', type: 'info', visible: false });
   const [saving, setSaving] = useState(false);
-
-  const showNotification = (message, type = 'info') => {
-    setNotification({ message, type, visible: true });
-    setTimeout(() => {
-      setNotification({ ...notification, visible: false });
-    }, 3000);
-  };
+  const [err, setErr] = useState("");
 
   const handleSave = async (form) => {
     try {
       setSaving(true);
-      console.log('Creating task with form:', form, 'for board:', boardId);
-      const result = await taskService.createTask(boardId, form);
-      console.log('Task creation result:', result);
-      setSaving(false);
-      
-      // Handle both response structures: {task: {...}} and direct task object
-      const task = result.task || result;
-      
-      if (!task || !task._id) {
-        console.error('Task creation failed - invalid response structure:', result);
-        throw new Error('Task creation failed - invalid response from server');
+      setErr("");
+      const created = await taskService.createTask(boardId, form);
+
+      const task = created?.task || created;
+      if (!task?._id) {
+        throw new Error("Invalid server response: no task id");
       }
-      
-      showNotification('Task created successfully!', 'success');
+
       navigate(`/tasks/${task._id}`);
     } catch (e) {
+      setErr(e?.response?.data?.message || e.message || "Failed to create task");
+    } finally {
       setSaving(false);
-      console.error('Task creation error:', e);
-      if (e.response) {
-        console.error('Response data:', e.response.data);
-        console.error('Response status:', e.response.status);
-      }
-      showNotification(e?.response?.data?.message || e.message || 'Failed to create task', 'error');
     }
   };
 
   return (
-    <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
-      {notification.visible && (
-        <Notification message={notification.message} type={notification.type} />
-      )}
-      <div style={{ marginBottom: 12 }}>
-        <Link to={`/boards/${boardId}/tasks`}>&larr; Back to board</Link>
+    <div className="max-w-2xl mx-auto p-6">
+      <div className="mb-6 flex items-center space-x-3">
+        <Link
+          to={`/boards/${boardId}`}
+          className="flex items-center text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="h-5 w-5 mr-1" />
+          Back to Board
+        </Link>
+        <h2 className="text-2xl font-bold">Create Task</h2>
       </div>
-      <h2>Create New Task</h2>
-      <TaskForm onSave={handleSave} saving={saving} />
+
+      {err && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded">
+          {err}
+        </div>
+      )}
+
+      <div className="bg-white p-6 rounded-lg shadow">
+        <TaskForm onSave={handleSave} saving={saving} />
+      </div>
     </div>
   );
 }

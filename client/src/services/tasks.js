@@ -4,23 +4,19 @@ const unwrap = (res) => res?.data ?? {};
 
 const taskService = {
   getTasks: async (boardId) => {
-    const response = await api.get(`/tasks/board/${boardId}`);
-    return unwrap(response);
-  },
+  const response = await api.get(`/tasks/board/${boardId}`);
+  const result = unwrap(response);
+  return result?.data?.tasks || [];  
+},
+
   getTaskById: async (taskId) => {
     const response = await api.get(`/tasks/${taskId}`);
     return unwrap(response).task;
   },
   createTask: async (boardId, taskData) => {
     try {
-      console.log('Making API call to create task:', { boardId, taskData });
       const response = await api.post(`/tasks/board/${boardId}`, taskData);
-      console.log('API response:', response);
-      console.log('Response data:', response.data);
       const result = unwrap(response);
-      console.log('Unwrapped result:', result);
-      console.log('Result data property:', result.data);
-      console.log('Result task property:', result.task);
       return result.data || result.task || result;
     } catch (error) {
       console.error('Error in createTask service:', error);

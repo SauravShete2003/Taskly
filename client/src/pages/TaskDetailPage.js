@@ -16,14 +16,16 @@ export default function TaskDetailPage() {
   const [error, setError] = useState('');
   const [notification, setNotification] = useState({ message: '', type: 'info', visible: false });
 
+  // ✅ safer notification
   const showNotification = (message, type = 'info') => {
     setNotification({ message, type, visible: true });
     setTimeout(() => {
-      setNotification({ ...notification, visible: false });
+      setNotification(prev => ({ ...prev, visible: false }));
     }, 3000);
   };
 
-  const fetchTask = async () => {
+  // ✅ wrap fetchTask in useCallback so it’s stable
+  const fetchTask = useCallback(async () => {
     try {
       console.log('Fetching task with ID:', taskId);
       setLoading(true);
@@ -37,12 +39,12 @@ export default function TaskDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [taskId]);
 
   useEffect(() => {
     console.log('TaskDetailPage useEffect triggered with taskId:', taskId);
     if (taskId) fetchTask();
-  }, [taskId, fetchTask]);
+  }, [taskId, fetchTask]); // ✅ now fetchTask is stable
 
   const handleSave = async (form) => {
     try {
@@ -125,7 +127,6 @@ export default function TaskDetailPage() {
               description: task.description || '',
               priority: task.priority || 'medium',
               dueDate: task.dueDate ? task.dueDate.slice(0, 10) : '',
-              
             }}
             onSave={handleSave}
           />

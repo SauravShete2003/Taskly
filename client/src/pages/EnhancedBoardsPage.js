@@ -7,6 +7,7 @@ import BoardCard from '../components/BoardCard';
 import StatisticsCard from '../components/StatisticsCard';
 import Notification from '../components/Notification';
 import { CheckCircle, Clock, List, AlertCircle } from 'lucide-react';
+import taskService from '../services/tasks';
 
 export default function EnhancedBoardsPage() {
   const { projectId } = useParams();
@@ -66,28 +67,35 @@ export default function EnhancedBoardsPage() {
     }
   }, [projectId]);
 
-  const fetchProjectStats = useCallback(async () => {
-    try {
-      setStatsLoading(true);
-      const totalTasks = boards.reduce((sum, board) => sum + (board.taskCount || 0), 0);
-      const completedTasks = boards.reduce((sum, board) => sum + (board.completedTasks || 0), 0);
-      const inProgressTasks = boards.reduce((sum, board) => sum + (board.inProgressTasks || 0), 0);
-      const overdueTasks = boards.reduce((sum, board) => sum + (board.overdueTasks || 0), 0);
-      const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+ const fetchProjectStats = useCallback(async () => {
+  try {
+    setStatsLoading(true);
+    let total = 0, completed = 0, inProgress = 0, overdue = 0;
 
-      setProjectStats({
-        totalTasks,
-        completedTasks,
-        inProgressTasks,
-        overdueTasks,
-        completionRate
-      });
-    } catch (e) {
-      console.error('Failed to fetch project stats:', e);
-    } finally {
-      setStatsLoading(false);
+    for (const board of boards) {
+      const tasks = await taskService.getTasks(board._id); 
+      total += tasks.length;
+      completed += tasks.filter(t => t.status === "COMPLETED").length;
+      inProgress += tasks.filter(t => t.status === "IN_PROGRESS").length;
+      overdue += tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== "COMPLETED").length;
     }
-  }, [boards]);
+
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    setProjectStats({
+      totalTasks: total,
+      completedTasks: completed,
+      inProgressTasks: inProgress,
+      overdueTasks: overdue,
+      completionRate
+    });
+  } catch (e) {
+    console.error("Failed to fetch project stats:", e);
+  } finally {
+    setStatsLoading(false);
+  }
+}, [boards]);
+
 
   useEffect(() => {
     if (boards.length > 0) {
