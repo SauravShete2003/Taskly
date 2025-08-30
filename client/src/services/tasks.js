@@ -11,13 +11,13 @@ const taskService = {
 
   getTaskById: async (taskId) => {
     const response = await api.get(`/tasks/${taskId}`);
-    return unwrap(response).task;
+    return unwrap(response).data.task;
   },
   createTask: async (boardId, taskData) => {
     try {
       const response = await api.post(`/tasks/board/${boardId}`, taskData);
       const result = unwrap(response);
-      return result.data || result.task || result;
+      return result.data?.task || result.data || result.task || result;
     } catch (error) {
       console.error('Error in createTask service:', error);
       throw error;
@@ -25,7 +25,7 @@ const taskService = {
   },
   updateTask: async (taskId, taskData) => {
     const response = await api.put(`/tasks/${taskId}`, taskData);
-    return unwrap(response).task;
+    return unwrap(response).data.task;
   },
   deleteTask: async (taskId) => {
     const response = await api.delete(`/tasks/${taskId}`);
