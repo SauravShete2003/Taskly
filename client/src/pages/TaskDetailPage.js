@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import taskService from '../services/tasks';
-import { unwrap } from '../utils/shape.ts';
 import TaskForm from '../components/TaskForm';
 import CommentList from '../components/CommentList';
 import CommentInput from '../components/CommentInput';
@@ -16,7 +15,6 @@ export default function TaskDetailPage() {
   const [error, setError] = useState('');
   const [notification, setNotification] = useState({ message: '', type: 'info', visible: false });
 
-  // ✅ safer notification
   const showNotification = (message, type = 'info') => {
     setNotification({ message, type, visible: true });
     setTimeout(() => {
@@ -24,13 +22,10 @@ export default function TaskDetailPage() {
     }, 3000);
   };
 
-  // ✅ wrap fetchTask in useCallback so it’s stable
   const fetchTask = useCallback(async () => {
     try {
-      console.log('Fetching task with ID:', taskId);
       setLoading(true);
       const task = await taskService.getTaskById(taskId);
-      console.log('Fetched task payload:', task);
       setTask(task);
     } catch (e) {
       console.error('Error fetching task:', e);
@@ -43,7 +38,7 @@ export default function TaskDetailPage() {
   useEffect(() => {
     console.log('TaskDetailPage useEffect triggered with taskId:', taskId);
     if (taskId) fetchTask();
-  }, [taskId, fetchTask]); // ✅ now fetchTask is stable
+  }, [taskId, fetchTask]); 
 
   const handleSave = async (form) => {
     try {

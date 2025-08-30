@@ -31,6 +31,12 @@ const BoardTasks = () => {
     setLoading(true);
     setErr('');
     try {
+      // Check if boardId is valid before making the API call
+      if (!boardId || boardId === 'undefined') {
+        console.warn('Invalid boardId provided to loadTasks:', boardId);
+        setTasks([]);
+        return;
+      }
       const list = await taskService.getTasks(boardId);
       setTasks(Array.isArray(list) ? list : []);
     } catch (e) {

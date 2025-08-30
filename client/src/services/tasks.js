@@ -4,16 +4,24 @@ const unwrap = (res) => res?.data ?? {};
 
 const taskService = {
   getTasks: async (boardId) => {
-  const response = await api.get(`/tasks/board/${boardId}`);
-  const result = unwrap(response);
-  return result?.data?.tasks || [];  
-},
+    if (!boardId || boardId === 'undefined') {
+      console.warn('Invalid boardId provided to getTasks:', boardId);
+      return [];
+    }
+    const response = await api.get(`/tasks/board/${boardId}`);
+    const result = unwrap(response);
+    return result?.data?.tasks || [];  
+  },
 
   getTaskById: async (taskId) => {
     const response = await api.get(`/tasks/${taskId}`);
     return unwrap(response).data.task;
   },
   createTask: async (boardId, taskData) => {
+    if (!boardId || boardId === 'undefined') {
+      console.warn('Invalid boardId provided to createTask:', boardId);
+      throw new Error('Invalid board ID provided');
+    }
     try {
       const response = await api.post(`/tasks/board/${boardId}`, taskData);
       const result = unwrap(response);

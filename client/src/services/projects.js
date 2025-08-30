@@ -15,6 +15,10 @@ export const projectService = {
   },
 
   getProjectById: async (projectId) => {
+    if (!projectId || projectId === 'undefined') {
+      console.warn('Invalid projectId provided to getProjectById:', projectId);
+      return null;
+    }
     const res = await api.get(`/projects/${projectId}`);
     return extractProject(res);
   },
@@ -25,26 +29,46 @@ export const projectService = {
   },
 
   updateProject: async (projectId, payload) => {
+    if (!projectId || projectId === 'undefined') {
+      console.warn('Invalid projectId provided to updateProject:', projectId);
+      throw new Error('Invalid project ID provided');
+    }
     const res = await api.put(`/projects/${projectId}`, payload);
     return extractProject(res);
   },
 
   deleteProject: async (projectId) => {
+    if (!projectId || projectId === 'undefined') {
+      console.warn('Invalid projectId provided to deleteProject:', projectId);
+      throw new Error('Invalid project ID provided');
+    }
     const res = await api.delete(`/projects/${projectId}`);
     return res?.data || { success: true };
   },
 
   addMember: async (projectId, userId, role = 'member') => {
+    if (!projectId || projectId === 'undefined') {
+      console.warn('Invalid projectId provided to addMember:', projectId);
+      throw new Error('Invalid project ID provided');
+    }
     const res = await api.post(`/projects/${projectId}/members`, { userId, role });
     return extractProject(res);
   },
 
   removeMember: async (projectId, userId) => {
+    if (!projectId || projectId === 'undefined') {
+      console.warn('Invalid projectId provided to removeMember:', projectId);
+      throw new Error('Invalid project ID provided');
+    }
     const res = await api.delete(`/projects/${projectId}/members/${userId}`);
     return extractProject(res);
   },
 
   updateMemberRole: async (projectId, userId, role) => {
+    if (!projectId || projectId === 'undefined') {
+      console.warn('Invalid projectId provided to updateMemberRole:', projectId);
+      throw new Error('Invalid project ID provided');
+    }
     const res = await api.put(`/projects/${projectId}/members/${userId}`, { role });
     return extractProject(res);
   },

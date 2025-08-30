@@ -13,51 +13,52 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <Home className="h-6 w-6 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">Taskly</span>
-            </Link>
-          </div>
+   <header className="bg-white/80 backdrop-blur-md shadow-sm border-b sticky top-0 z-50">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex justify-between items-center h-16">
+      
+      {/* Logo */}
+      <Link to="/" className="flex items-center space-x-2">
+        <Home className="h-6 w-6 text-blue-600" />
+        <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          Taskly
+        </span>
+      </Link>
 
-          <nav className="hidden md:flex space-x-8">
-            <Link to="/" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
-              Dashboard
-            </Link>
-            <Link to="/projects" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
-              Projects
-            </Link>
-          </nav>
+      {/* Nav */}
+      <nav className="hidden md:flex space-x-6">
+        <Link to="/" className="hover:text-blue-600 font-medium transition-colors">Dashboard</Link>
+        <Link to="/projects" className="hover:text-blue-600 font-medium transition-colors">Projects</Link>
+      </nav>
 
-          <div className="flex items-center space-x-4">
-            {isAuthenticated ? (
-              <>
-                <Link to="/profile" className="text-gray-700 hover:text-blue-600">
-                  <User className="h-5 w-5" />
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="text-gray-700 hover:text-red-600 flex items-center space-x-1"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span className="text-sm">Logout</span>
-                </button>
-              </>
-            ) : (
-              <Link
-                to="/login"
-                className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-              >
-                Login
-              </Link>
-            )}
-          </div>
-        </div>
+      {/* Auth */}
+      <div className="flex items-center space-x-4">
+        {isAuthenticated ? (
+          <>
+            <Link to="/profile" className="text-gray-600 hover:text-blue-600 transition-colors">
+              <User className="h-5 w-5" />
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-1 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors"
+            >
+              <LogOut className="h-5 w-5" />
+              <span>Logout</span>
+            </button>
+          </>
+        ) : (
+          <Link
+            to="/login"
+            className="btn-primary text-sm"
+          >
+            Login
+          </Link>
+        )}
       </div>
-    </header>
+    </div>
+  </div>
+</header>
+
   );
 };
 

@@ -1,5 +1,6 @@
+
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate, useParams, Link, Navigate } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import {
   getBoards, createBoard, deleteBoard, reorderBoards, updateBoard,
 } from '../services/boards';
@@ -11,7 +12,6 @@ import taskService from '../services/tasks';
 
 export default function EnhancedBoardsPage() {
   const { projectId } = useParams();
-  const navigate = useNavigate();
   const [boards, setBoards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -58,7 +58,9 @@ export default function EnhancedBoardsPage() {
     try {
       setLoading(true);
       const data = await getBoards(projectId);
-      setBoards(data);
+      // Filter out boards with undefined or missing _id
+      const validBoards = data.filter(board => board._id !== undefined && board._id !== null);
+      setBoards(validBoards);
     } catch (e) {
       setError(e?.response?.data?.message || 'Failed to load boards');
       showNotification(e?.response?.data?.message || 'Failed to load boards', 'error');
@@ -72,7 +74,10 @@ export default function EnhancedBoardsPage() {
     setStatsLoading(true);
     let total = 0, completed = 0, inProgress = 0, overdue = 0;
 
-    for (const board of boards) {
+    // Filter out boards with invalid IDs before making API calls
+    const validBoards = boards.filter(board => board._id && board._id !== 'undefined');
+    
+    for (const board of validBoards) {
       const tasks = await taskService.getTasks(board._id); 
       total += tasks.length;
       completed += tasks.filter(t => t.status === "COMPLETED").length;
