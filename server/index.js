@@ -8,7 +8,6 @@ import fs from 'fs';
 
 // Import configurations
 import connectDB from './config/database.js';
-import { setupSocket } from './config/socket.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -47,9 +46,6 @@ const ensureUploadDirs = () => {
 
 // Call this after __dirname is properly defined
 ensureUploadDirs();
-
-// Setup WebSocket
-const io = setupSocket(server);
 
 // Middleware
 app.use(cors({
@@ -111,5 +107,3 @@ server.listen(PORT, () => {
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 Client URL: ${process.env.CLIENT_URL || 'http://localhost:3000'}`);
 });
-
-export { io };

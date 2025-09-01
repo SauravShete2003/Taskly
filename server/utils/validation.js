@@ -152,6 +152,19 @@ export const boardValidation = {
     handleValidationErrors,
   ],
   boardId: [param('boardId').isMongoId().withMessage('Invalid board ID'), handleValidationErrors],
+  
+  reorder: [
+    body('boardOrders')
+      .isArray({ min: 1 })
+      .withMessage('boardOrders must be a non-empty array'),
+    body('boardOrders.*.boardId')
+      .isMongoId()
+      .withMessage('Invalid board ID'),
+    body('boardOrders.*.order')
+      .isInt({ min: 0 })
+      .withMessage('Order must be a non-negative integer'),
+    handleValidationErrors,
+  ],
 };
 
 export const taskValidation = {

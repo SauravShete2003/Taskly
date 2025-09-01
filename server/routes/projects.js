@@ -1,5 +1,5 @@
 import express from "express";
-import { authenticateToken } from "../middleware/auth.js";
+import { authenticateToken, requireProjectAdmin } from "../middleware/auth.js";
 import {
   getProjects,
   getProjectById,
@@ -32,21 +32,24 @@ router.put(
 );
 router.delete("/:projectId", projectValidation.projectId, deleteProject);
 
-// ================== Members ==================
+// ================== Members (Admin Only) ==================
 router.post(
   "/:projectId/members",
+  requireProjectAdmin,
   projectValidation.memberAdd,
   addMember
 );
 
 router.delete(
   "/:projectId/members/:userId",
+  requireProjectAdmin,
   projectValidation.memberParam,
   removeMember
 );
 
 router.put(
   "/:projectId/members/:userId",
+  requireProjectAdmin,
   projectValidation.memberParam.concat(projectValidation.memberRole),
   updateMemberRole
 );

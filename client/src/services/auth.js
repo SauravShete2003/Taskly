@@ -80,6 +80,15 @@ export const authService = {
     const res = await api.put('/auth/change-password', passwordData);
     return res.data;
   },
+
+  // Search users by name or email
+  searchUsers: async (query) => {
+    if (!query || query.trim().length < 2) {
+      return [];
+    }
+    const res = await api.get(`/users/search?q=${encodeURIComponent(query)}`);
+    return res.data?.users || [];
+  },
 };
 
 export default authService;

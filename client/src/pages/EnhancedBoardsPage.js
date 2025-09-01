@@ -80,9 +80,9 @@ export default function EnhancedBoardsPage() {
     for (const board of validBoards) {
       const tasks = await taskService.getTasks(board._id); 
       total += tasks.length;
-      completed += tasks.filter(t => t.status === "COMPLETED").length;
-      inProgress += tasks.filter(t => t.status === "IN_PROGRESS").length;
-      overdue += tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== "COMPLETED").length;
+      completed += tasks.filter(t => t.status === "done" || t.isCompleted).length;
+      inProgress += tasks.filter(t => t.status === "in_progress").length;
+      overdue += tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && !t.isCompleted && t.status !== "done").length;
     }
 
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -179,9 +179,14 @@ export default function EnhancedBoardsPage() {
         boardId: b._id,
         order: index,
       }));
+      
+      // Debug: Log the data being sent
+      console.log('Sending board orders:', boardOrders);
+      
       await reorderBoards(boardOrders);
       showNotification('Board order saved successfully', 'success');
     } catch (e) {
+      console.error('Reorder error:', e);
       showNotification(e?.response?.data?.message || 'Failed to save order', 'error');
     }
   };

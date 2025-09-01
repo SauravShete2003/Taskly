@@ -27,6 +27,6 @@ router.put("/:boardId", boardValidation.boardId, updateBoard);
 router.delete("/:boardId", boardValidation.boardId, deleteBoard);
 
 // PUT /api/boards/reorder
-router.put("/reorder", reorderBoards);
+router.put("/reorder", boardValidation.reorder, reorderBoards);
 
 export default router;

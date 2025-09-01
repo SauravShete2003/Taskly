@@ -1,36 +1,20 @@
-// server/routes/users.js
-import express from 'express';
-import { authenticateToken } from '../middleware/auth.js';
-import {
-  getUsers,
-  getUserById,
-  getCurrentUser,
-  updateUser,
-  updateCurrentUser,
-  deleteUser,
-  deleteCurrentUser,
-  uploadAvatar,
-  changePassword,
-} from '../controllers/userController.js';
-import { userValidation, paginationValidation } from '../utils/validation.js';
-import { avatarUpload } from '../middleware/upload.js';
+import express from "express";
+import { authenticateToken } from "../middleware/auth.js";
+import { searchUsers } from "../controllers/userController.js";
+import { getProfile, updateProfile } from "../controllers/authController.js";
 
 const router = express.Router();
 
 // All routes require authentication
 router.use(authenticateToken);
 
-// Current user (no ID required)
-router.get('/me', getCurrentUser);
-router.put('/me', userValidation.updateProfile, updateCurrentUser);
-router.put('/me/password', changePassword); 
-router.post('/me/avatar', avatarUpload, uploadAvatar);
-router.delete('/me', deleteCurrentUser);
+// Get current user profile
+router.get("/me", getProfile);
 
-// Admin and ID-based operations
-router.get('/', paginationValidation, getUsers);
-router.get('/:id', userValidation.userId, getUserById);
-router.put('/:id', userValidation.userId, userValidation.updateProfile, updateUser);
-router.delete('/:id', userValidation.userId, deleteUser);
+// Update current user profile
+router.put("/me", updateProfile);
+
+// Search users by name or email
+router.get("/search", searchUsers);
 
 export default router;

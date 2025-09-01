@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // For CRA/Webpack, environment vars must be prefixed with REACT_APP_
-const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const http = axios.create({ baseURL });
 

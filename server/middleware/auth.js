@@ -84,4 +84,86 @@ export const optionalAuth = async (req, res, next) => {
     // Continue without authentication
     next();
   }
+};
+
+// Check if user is admin (either global admin or project admin)
+export const requireAdmin = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    // Check if user is global admin
+    if (req.user.role === 'admin') {
+      return next();
+    }
+
+    // For project-specific admin checks, we'll handle in the route
+    return res.status(403).json({
+      success: false,
+      message: 'Admin access required'
+    });
+  } catch (error) {
+    console.error('Admin middleware error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Authorization error'
+    });
+  }
+};
+
+// Check if user is project admin or owner
+export const requireProjectAdmin = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    // Global admin can do anything
+    if (req.user.role === 'admin') {
+      return next();
+    }
+
+    const projectId = req.params.projectId;
+    if (!projectId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Project ID required'
+      });
+    }
+
+    // Import Project model here to avoid circular dependency
+    const Project = (await import('../models/Project.js')).default;
+    const project = await Project.findById(projectId);
+    
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found'
+      });
+    }
+
+    // Check if user is project owner or admin
+    if (project.isAdmin(req.user._id)) {
+      req.project = project;
+      return next();
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: 'Project admin access required'
+    });
+  } catch (error) {
+    console.error('Project admin middleware error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Authorization error'
+    });
+  }
 }; 
