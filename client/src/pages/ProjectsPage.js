@@ -2,28 +2,22 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Plus, 
-  Folder, 
-  Clock, 
-  CheckCircle, 
-  Calendar,
-  BarChart3,
   Search,
   Grid3X3,
   List
 } from 'lucide-react';
 import { projectService } from '../services/projects';
 import Layout from '../components/Layout/Layout';
-import StatisticsCard from '../components/StatisticsCard';
 import ProjectCard from '../components/ProjectCard';
 import EmptyState from '../components/EmptyState';
 import { demoProjects } from '../constants/demoData';
 
-const Dashboard = () => {
+const ProjectsPage = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('grid');
   const [filterStatus, setFilterStatus] = useState('all');
   const navigate = useNavigate();
 
@@ -68,15 +62,6 @@ const Dashboard = () => {
     console.log('Project menu clicked:', project);
   };
 
-  // Calculate dashboard statistics
-  const totalProjects = projects.length;
-  const completedProjects = projects.filter(p => p.status?.toLowerCase() === 'completed').length;
-  const inProgressProjects = projects.filter(p => p.status?.toLowerCase() === 'in progress' || p.status?.toLowerCase() === 'active').length;
-  const overdueProjects = projects.filter(p => {
-    if (!p.deadline) return false;
-    return new Date(p.deadline) < new Date() && p.status?.toLowerCase() !== 'completed';
-  }).length;
-
   // Filter projects based on search and status
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,42 +71,6 @@ const Dashboard = () => {
   });
 
   const items = Array.isArray(filteredProjects) ? filteredProjects : [];
-
-  // Mock data for demonstration - replace with real data
-  const stats = [
-    {
-      title: 'Total Projects',
-      value: totalProjects,
-      change: '+12%',
-      changeType: 'positive',
-      icon: Folder,
-      color: 'primary'
-    },
-    {
-      title: 'Completed',
-      value: completedProjects,
-      change: '+8%',
-      changeType: 'positive',
-      icon: CheckCircle,
-      color: 'success'
-    },
-    {
-      title: 'In Progress',
-      value: inProgressProjects,
-      change: '+5%',
-      changeType: 'neutral',
-      icon: Clock,
-      color: 'warning'
-    },
-    {
-      title: 'Overdue',
-      value: overdueProjects,
-      change: overdueProjects > 0 ? '!' : '0',
-      changeType: overdueProjects > 0 ? 'negative' : 'neutral',
-      icon: Calendar,
-      color: overdueProjects > 0 ? 'danger' : 'info'
-    }
-  ];
 
   if (error) {
     return (
@@ -146,10 +95,10 @@ const Dashboard = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
-              Welcome back! 👋
+              Projects
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400 leading-relaxed">
-              Here's what's happening with your projects today.
+              Manage and organize all your projects in one place.
             </p>
           </div>
           <Link to="/projects/new" className="btn-primary flex items-center space-x-3 px-6 py-3 text-lg">
@@ -158,30 +107,14 @@ const Dashboard = () => {
           </Link>
         </div>
 
-        {/* Statistics Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {stats.map((stat, index) => (
-            <StatisticsCard
-              key={index}
-              title={stat.title}
-              value={stat.value}
-              change={stat.change}
-              changeType={stat.changeType}
-              icon={stat.icon}
-              color={stat.color}
-              loading={loading}
-            />
-          ))}
-        </div>
-
         {/* Projects Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 pt-10 border-t border-gray-200 dark:border-gray-700">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Your Projects
+              All Projects
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400">
-              {items.length} project{items.length !== 1 ? 's' : ''} • {totalProjects} total
+              {items.length} project{items.length !== 1 ? 's' : ''} • {projects.length} total
             </p>
           </div>
 
@@ -278,33 +211,9 @@ const Dashboard = () => {
             ))}
           </div>
         )}
-
-        {/* Quick Actions */}
-        {!loading && items.length > 0 && (
-          <div className="bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 rounded-3xl p-10 border border-primary-200 dark:border-primary-800">
-            <div className="text-center">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                Need help getting started?
-              </h3>
-              <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
-                Explore our guides and templates to kickstart your project management journey.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-                <Link to="/projects/new" className="btn-primary px-8 py-3 text-lg">
-                  <Plus className="h-5 w-5 mr-3" />
-                  Create Another Project
-                </Link>
-                <button className="btn-secondary px-8 py-3 text-lg">
-                  <BarChart3 className="h-5 w-5 mr-3" />
-                  View Templates
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </Layout>
   );
 };
 
-export default Dashboard;
+export default ProjectsPage;

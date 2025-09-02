@@ -15,6 +15,8 @@ import EnhancedBoardsPage from "./pages/EnhancedBoardsPage";
 import Profile from "./pages/Profile";
 import TaskDetailPage from "./pages/TaskDetailPage";
 import TaskCreatePage from "./pages/TaskCreatePage";
+import ProjectsPage from "./pages/ProjectsPage";
+import TasksPage from "./pages/TasksPage";
 import "./App.css";
 
 function App() {
@@ -59,6 +61,18 @@ function App() {
             path="/dashboard"
             element={
               isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />
+            }
+          />
+          <Route
+            path="/projects"
+            element={
+              isAuthenticated ? <ProjectsPage /> : <Navigate to="/login" replace />
+            }
+          />
+          <Route
+            path="/tasks"
+            element={
+              isAuthenticated ? <TasksPage /> : <Navigate to="/login" replace />
             }
           />
           <Route
