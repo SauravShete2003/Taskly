@@ -4,13 +4,23 @@ import {
   Plus, 
   Search,
   Grid3X3,
-  List
+  List as ListIcon
 } from 'lucide-react';
 import { projectService } from '../services/projects';
 import Layout from '../components/Layout/Layout';
 import ProjectCard from '../components/ProjectCard';
 import EmptyState from '../components/EmptyState';
 import { demoProjects } from '../constants/demoData';
+
+const normalizeStatus = (status) => {
+  const s = (status || '').toString().toLowerCase().trim();
+  if (!s) return 'pending';
+  if (['in progress', 'in-progress', 'active', 'ongoing'].includes(s)) return 'active';
+  if (['completed', 'complete', 'done'].includes(s)) return 'completed';
+  if (['overdue', 'late', 'past due', 'past-due'].includes(s)) return 'overdue';
+  if (['pending', 'to do', 'to-do', 'todo', 'not started', 'not-started'].includes(s)) return 'pending';
+  return s; // fallback to provided
+};
 
 const ProjectsPage = () => {
   const [projects, setProjects] = useState([]);
@@ -62,11 +72,13 @@ const ProjectsPage = () => {
     console.log('Project menu clicked:', project);
   };
 
-  // Filter projects based on search and status
+  // Filter projects based on search and status (normalized)
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || project.status?.toLowerCase() === filterStatus.toLowerCase();
+    const normalized = normalizeStatus(project.status);
+    const selected = normalizeStatus(filterStatus);
+    const matchesStatus = filterStatus === 'all' || normalized === selected;
     return matchesSearch && matchesStatus;
   });
 
@@ -139,7 +151,7 @@ const ProjectsPage = () => {
               className="px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:text-white font-medium"
             >
               <option value="all">All Status</option>
-              <option value="active">Active</option>
+              <option value="active">Active / In Progress</option>
               <option value="completed">Completed</option>
               <option value="pending">Pending</option>
               <option value="overdue">Overdue</option>
@@ -165,7 +177,7 @@ const ProjectsPage = () => {
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
-                <List className="h-5 w-5" />
+                <ListIcon className="h-5 w-5" />
               </button>
             </div>
           </div>

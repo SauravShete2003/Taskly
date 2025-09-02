@@ -9,7 +9,7 @@ import {
   BarChart3,
   Search,
   Grid3X3,
-  List
+  List as ListIcon
 } from 'lucide-react';
 import { projectService } from '../services/projects';
 import Layout from '../components/Layout/Layout';
@@ -17,6 +17,16 @@ import StatisticsCard from '../components/StatisticsCard';
 import ProjectCard from '../components/ProjectCard';
 import EmptyState from '../components/EmptyState';
 import { demoProjects } from '../constants/demoData';
+
+const normalizeStatus = (status) => {
+  const s = (status || '').toString().toLowerCase().trim();
+  if (!s) return 'pending';
+  if (['in progress', 'in-progress', 'active', 'ongoing'].includes(s)) return 'active';
+  if (['completed', 'complete', 'done'].includes(s)) return 'completed';
+  if (['overdue', 'late', 'past due', 'past-due'].includes(s)) return 'overdue';
+  if (['pending', 'to do', 'to-do', 'todo', 'not started', 'not-started'].includes(s)) return 'pending';
+  return s; // fallback to provided
+};
 
 const Dashboard = () => {
   const [projects, setProjects] = useState([]);
@@ -70,18 +80,18 @@ const Dashboard = () => {
 
   // Calculate dashboard statistics
   const totalProjects = projects.length;
-  const completedProjects = projects.filter(p => p.status?.toLowerCase() === 'completed').length;
-  const inProgressProjects = projects.filter(p => p.status?.toLowerCase() === 'in progress' || p.status?.toLowerCase() === 'active').length;
+  const completedProjects = projects.filter(p => normalizeStatus(p.status) === 'completed').length;
+  const inProgressProjects = projects.filter(p => normalizeStatus(p.status) === 'active').length;
   const overdueProjects = projects.filter(p => {
     if (!p.deadline) return false;
-    return new Date(p.deadline) < new Date() && p.status?.toLowerCase() !== 'completed';
+    return new Date(p.deadline) < new Date() && normalizeStatus(p.status) !== 'completed';
   }).length;
 
   // Filter projects based on search and status
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || project.status?.toLowerCase() === filterStatus.toLowerCase();
+    const matchesStatus = filterStatus === 'all' || normalizeStatus(project.status) === normalizeStatus(filterStatus);
     return matchesSearch && matchesStatus;
   });
 
@@ -232,7 +242,7 @@ const Dashboard = () => {
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
-                <List className="h-5 w-5" />
+                <ListIcon className="h-5 w-5" />
               </button>
             </div>
           </div>

@@ -7,7 +7,7 @@ import {
 import BoardCard from '../components/BoardCard';
 import StatisticsCard from '../components/StatisticsCard';
 import Notification from '../components/Notification';
-import { CheckCircle, Clock, List, AlertCircle } from 'lucide-react';
+import { CheckCircle, Clock, List as ListIcon, AlertCircle } from 'lucide-react';
 import taskService from '../services/tasks';
 
 export default function EnhancedBoardsPage() {
@@ -256,7 +256,7 @@ export default function EnhancedBoardsPage() {
               title="Total Tasks"
               value={projectStats.totalTasks}
               subtitle="Across all boards"
-              icon={<List className="h-4 w-4" />}
+              icon={ListIcon}
               color="blue"
               loading={statsLoading}
             />
@@ -264,7 +264,7 @@ export default function EnhancedBoardsPage() {
               title="Completed"
               value={projectStats.completedTasks}
               subtitle={`${projectStats.completionRate}% completion rate`}
-              icon={<CheckCircle className="h-4 w-4" />}
+              icon={CheckCircle}
               color="green"
               loading={statsLoading}
             />
@@ -272,7 +272,7 @@ export default function EnhancedBoardsPage() {
               title="In Progress"
               value={projectStats.inProgressTasks}
               subtitle="Tasks being worked on"
-              icon={<Clock className="h-4 w-4" />}
+              icon={Clock}
               color="orange"
               loading={statsLoading}
             />
@@ -280,7 +280,7 @@ export default function EnhancedBoardsPage() {
               title="Overdue"
               value={projectStats.overdueTasks}
               subtitle="Tasks past due date"
-              icon={<AlertCircle className="h-4 w-4" />}
+              icon={AlertCircle}
               color="red"
               loading={statsLoading}
             />
