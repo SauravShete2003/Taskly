@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Plus, 
@@ -16,7 +16,6 @@ import Layout from '../components/Layout/Layout';
 import StatisticsCard from '../components/StatisticsCard';
 import ProjectCard from '../components/ProjectCard';
 import EmptyState from '../components/EmptyState';
-import { demoProjects } from '../constants/demoData';
 
 const normalizeStatus = (status) => {
   const s = (status || '').toString().toLowerCase().trim();
@@ -25,7 +24,7 @@ const normalizeStatus = (status) => {
   if (['completed', 'complete', 'done'].includes(s)) return 'completed';
   if (['overdue', 'late', 'past due', 'past-due'].includes(s)) return 'overdue';
   if (['pending', 'to do', 'to-do', 'todo', 'not started', 'not-started'].includes(s)) return 'pending';
-  return s; // fallback to provided
+  return s;
 };
 
 const Dashboard = () => {
@@ -33,10 +32,31 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('grid'); 
   const [filterStatus, setFilterStatus] = useState('all');
   const navigate = useNavigate();
 
+  // ✅ Stable fetchProjects function
+  const fetchProjects = useCallback(async () => {
+    try {
+      setLoading(true);
+      const list = await projectService.getProjects();
+      setProjects(Array.isArray(list) ? list : []);  
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        navigate('/login');
+      } else {
+        setError("Failed to fetch projects");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate]);
+
+  // Load projects on mount
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -44,41 +64,13 @@ const Dashboard = () => {
       return;
     }
     fetchProjects();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
+  }, [navigate, fetchProjects]);
 
-  const fetchProjects = async () => {
-    try {
-      const list = await projectService.getProjects();
-      const realProjects = Array.isArray(list) ? list : [];
-      
-      // Use demo data if no real projects exist (for demonstration purposes)
-      if (realProjects.length === 0) {
-        setProjects(demoProjects);
-      } else {
-        setProjects(realProjects);
-      }
-    } catch (error) {
-      console.error('Error fetching projects:', error);
-      if (error.response?.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/login');
-      } else {
-        // Use demo data as fallback for demonstration
-        setProjects(demoProjects);
-        setError(null);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleProjectMenuClick = (project, event) => {
-    // Handle project menu actions (edit, delete, etc.)
+  const handleProjectMenuClick = (project) => {
     console.log('Project menu clicked:', project);
   };
 
-  // Calculate dashboard statistics
+  // ✅ Stats
   const totalProjects = projects.length;
   const completedProjects = projects.filter(p => normalizeStatus(p.status) === 'completed').length;
   const inProgressProjects = projects.filter(p => normalizeStatus(p.status) === 'active').length;
@@ -87,7 +79,7 @@ const Dashboard = () => {
     return new Date(p.deadline) < new Date() && normalizeStatus(p.status) !== 'completed';
   }).length;
 
-  // Filter projects based on search and status
+  // ✅ Filter projects
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -97,7 +89,6 @@ const Dashboard = () => {
 
   const items = Array.isArray(filteredProjects) ? filteredProjects : [];
 
-  // Mock data for demonstration - replace with real data
   const stats = [
     {
       title: 'Total Projects',

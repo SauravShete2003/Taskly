@@ -17,6 +17,7 @@ import TaskDetailPage from "./pages/TaskDetailPage";
 import TaskCreatePage from "./pages/TaskCreatePage";
 import ProjectsPage from "./pages/ProjectsPage";
 import TasksPage from "./pages/TasksPage";
+import AcceptInvite from "./components/AcceptInvite";
 import "./App.css";
 
 function App() {
@@ -167,7 +168,9 @@ function App() {
               />
             }
           />
+           <Route path="/accept-invite/:token" element={<AcceptInvite />} />
         </Routes>
+
       </div>
     </Router>
   );

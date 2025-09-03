@@ -20,6 +20,7 @@ export const projectService = {
       return null;
     }
     const res = await api.get(`/projects/${projectId}`);
+    console.log('Fetched project:', res);
     return extractProject(res);
   },
 

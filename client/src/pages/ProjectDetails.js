@@ -14,7 +14,7 @@ function isUserAdmin(project, userId) {
   return members.some((m) => {
     const mid = m.user?._id || m.user;
     const role = (m.role || "").toLowerCase();
-    return mid?.toString() === userId?.toString() && (role === "admin" || role === "owner");
+    return mid?.toString() === userId?.toString() && (role === "admin");
   });
 }
 

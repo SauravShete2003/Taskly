@@ -1,54 +1,31 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Users, 
   Calendar, 
   MoreVertical, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle,
-  PlayCircle,
-  FolderOpen
+  FolderOpen,
+  ExternalLink,
+  KanbanSquare,
+  Edit3
 } from 'lucide-react';
 
 const ProjectCard = ({ project, onMenuClick }) => {
-  const getStatusInfo = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'completed':
-        return {
-          icon: CheckCircle,
-          color: 'status-completed',
-          text: 'Completed'
-        };
-      case 'in progress':
-      case 'active':
-        return {
-          icon: PlayCircle,
-          color: 'status-active',
-          text: 'In Progress'
-        };
-      case 'overdue':
-        return {
-          icon: AlertCircle,
-          color: 'status-overdue',
-          text: 'Overdue'
-        };
-      case 'pending':
-      default:
-        return {
-          icon: Clock,
-          color: 'status-pending',
-          text: 'Pending'
-        };
-    }
-  };
+  // Local menu state for the 3-dot actions
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
-  const getProgressColor = (progress) => {
-    if (progress >= 80) return 'bg-success-500';
-    if (progress >= 60) return 'bg-primary-500';
-    if (progress >= 40) return 'bg-warning-500';
-    return 'bg-danger-500';
-  };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
 
   const getProjectColor = (color) => {
     const colors = {
@@ -64,10 +41,6 @@ const ProjectCard = ({ project, onMenuClick }) => {
     return colors[color] || color || '#E5E7EB';
   };
 
-  const StatusIcon = getStatusInfo(project.status).icon;
-  const statusColor = getStatusInfo(project.status).color;
-  const statusText = getStatusInfo(project.status).text;
-  const progress = project.progress || 0;
   const membersCount = 1 + (project.members?.length || 0);
   const projectColor = getProjectColor(project.color);
 
@@ -90,21 +63,48 @@ const ProjectCard = ({ project, onMenuClick }) => {
           </div>
         </div>
         
-        <div className="flex items-center space-x-2 flex-shrink-0">
-          <span className={`status-badge ${statusColor} flex items-center`}>
-            <StatusIcon className="h-3 w-3 mr-1.5" />
-            {statusText}
-          </span>
-          
+        <div className="relative flex items-center flex-shrink-0" ref={menuRef}>
           <button
             onClick={(e) => {
               e.preventDefault();
+              setMenuOpen((v) => !v);
               onMenuClick?.(project, e);
             }}
             className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
           >
             <MoreVertical className="h-4 w-4" />
           </button>
+
+          {menuOpen && (
+            <div className="absolute right-0 top-8 z-20 w-44 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl py-1 animate-in fade-in zoom-in-95">
+              <Link
+                to={`/projects/${project._id || project.id}`}
+                className="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                onClick={() => setMenuOpen(false)}
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open Project
+              </Link>
+              <Link
+                to={`/projects/${project._id || project.id}/boards`}
+                className="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                onClick={() => setMenuOpen(false)}
+              >
+                <KanbanSquare className="h-4 w-4 mr-2" />
+                Show Boards / Tasks
+              </Link>
+              <Link
+                to={`/projects/${project._id || project.id}/edit`}
+                className="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                onClick={() => setMenuOpen(false)}
+              >
+                <Edit3 className="h-4 w-4 mr-2" />
+                Edit Project
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
@@ -113,19 +113,7 @@ const ProjectCard = ({ project, onMenuClick }) => {
         {project.description || "No description available"}
       </p>
 
-      {/* Progress Bar */}
-      <div className="mb-5">
-        <div className="flex items-center justify-between text-sm mb-2.5">
-          <span className="text-gray-600 dark:text-gray-400 font-medium">Progress</span>
-          <span className="font-semibold text-gray-900 dark:text-white">{progress}%</span>
-        </div>
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
-          <div 
-            className={`h-2.5 rounded-full transition-all duration-500 ease-out ${getProgressColor(progress)}`}
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
+      {/* Progress removed by request */}
 
       {/* Project Stats */}
       <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-5">

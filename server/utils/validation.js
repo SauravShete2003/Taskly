@@ -1,7 +1,6 @@
 import { body, param, query, validationResult } from 'express-validator';
 import { DEFAULTS, PROJECT_ROLES } from './constants.js';
 
-// Safe fallbacks if DEFAULTS isn't fully defined
 const NAME_MAX = DEFAULTS?.NAME_MAX_LENGTH ?? 50;
 const PASSWORD_MIN = DEFAULTS?.PASSWORD_MIN_LENGTH ?? 6;
 const PROJECT_NAME_MAX = DEFAULTS?.PROJECT_NAME_MAX_LENGTH ?? 100;
@@ -23,7 +22,6 @@ export const handleValidationErrors = (req, res, next) => {
   next();
 };
 
-// User validation schemas (this is the missing export)
 export const userValidation = {
   register: [
     body('name')

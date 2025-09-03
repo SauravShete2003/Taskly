@@ -9,20 +9,24 @@ import {
 } from '../utils/responseHandler.js';
 import { HTTP_STATUS, PROJECT_ROLES } from '../utils/constants.js';
 
-// Get user's projects (owner or member), exclude archived
 export const getProjects = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  const projects = await Project.find({
-    $or: [{ owner: userId }, { 'members.user': userId }],
-    isArchived: false,
-  })
+  let query = { isArchived: false };
+
+  // If not global admin, restrict to owned or member projects
+  if (req.user.role !== 'admin') {
+    query.$or = [{ owner: userId }, { 'members.user': userId }];
+  }
+
+  const projects = await Project.find(query)
     .populate('owner', 'name email avatar')
     .populate('members.user', 'name email avatar')
     .sort({ updatedAt: -1 });
 
   return successResponse(res, { projects });
 });
+
 
 // Get project by ID (public or member-only)
 export const getProjectById = asyncHandler(async (req, res) => {

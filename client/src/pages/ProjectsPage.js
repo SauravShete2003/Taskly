@@ -1,16 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Plus, 
-  Search,
-  Grid3X3,
-  List as ListIcon
-} from 'lucide-react';
+import { Plus, Search, Grid3X3, List as ListIcon } from 'lucide-react';
 import { projectService } from '../services/projects';
 import Layout from '../components/Layout/Layout';
 import ProjectCard from '../components/ProjectCard';
-import EmptyState from '../components/EmptyState';
-import { demoProjects } from '../constants/demoData';
 
 const normalizeStatus = (status) => {
   const s = (status || '').toString().toLowerCase().trim();
@@ -19,7 +12,7 @@ const normalizeStatus = (status) => {
   if (['completed', 'complete', 'done'].includes(s)) return 'completed';
   if (['overdue', 'late', 'past due', 'past-due'].includes(s)) return 'overdue';
   if (['pending', 'to do', 'to-do', 'todo', 'not started', 'not-started'].includes(s)) return 'pending';
-  return s; // fallback to provided
+  return s;
 };
 
 const ProjectsPage = () => {
@@ -44,23 +37,14 @@ const ProjectsPage = () => {
   const fetchProjects = async () => {
     try {
       const list = await projectService.getProjects();
-      const realProjects = Array.isArray(list) ? list : [];
-      
-      // Use demo data if no real projects exist (for demonstration purposes)
-      if (realProjects.length === 0) {
-        setProjects(demoProjects);
-      } else {
-        setProjects(realProjects);
-      }
+      setProjects(Array.isArray(list) ? list : []);
     } catch (error) {
       console.error('Error fetching projects:', error);
       if (error.response?.status === 401) {
         localStorage.removeItem('token');
         navigate('/login');
       } else {
-        // Use demo data as fallback for demonstration
-        setProjects(demoProjects);
-        setError(null);
+        setError('Failed to load projects');
       }
     } finally {
       setLoading(false);
@@ -68,14 +52,14 @@ const ProjectsPage = () => {
   };
 
   const handleProjectMenuClick = (project, event) => {
-    // Handle project menu actions (edit, delete, etc.)
     console.log('Project menu clicked:', project);
   };
 
-  // Filter projects based on search and status (normalized)
-  const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description?.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filter projects based on search and status
+  const filteredProjects = projects.filter((project) => {
+    const matchesSearch =
+      project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const normalized = normalizeStatus(project.status);
     const selected = normalizeStatus(filterStatus);
     const matchesStatus = filterStatus === 'all' || normalized === selected;
@@ -89,10 +73,7 @@ const ProjectsPage = () => {
       <Layout showSidebar={true}>
         <div className="text-center py-20">
           <div className="text-red-500 text-xl mb-6 font-medium">{error}</div>
-          <button 
-            onClick={fetchProjects}
-            className="btn-primary px-6 py-3"
-          >
+          <button onClick={fetchProjects} className="btn-primary px-6 py-3">
             Try Again
           </button>
         </div>
@@ -113,7 +94,10 @@ const ProjectsPage = () => {
               Manage and organize all your projects in one place.
             </p>
           </div>
-          <Link to="/projects/new" className="btn-primary flex items-center space-x-3 px-6 py-3 text-lg">
+          <Link
+            to="/projects/new"
+            className="btn-primary flex items-center space-x-3 px-6 py-3 text-lg"
+          >
             <Plus className="h-6 w-6" />
             <span>New Project</span>
           </Link>
@@ -126,7 +110,7 @@ const ProjectsPage = () => {
               All Projects
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400">
-              {items.length} project{items.length !== 1 ? 's' : ''} • {projects.length} total
+              {items.length} project{items.length !== 1 ? 's' : ''}
             </p>
           </div>
 
@@ -162,8 +146,8 @@ const ProjectsPage = () => {
               <button
                 onClick={() => setViewMode('grid')}
                 className={`p-3 rounded-lg transition-all duration-200 ${
-                  viewMode === 'grid' 
-                    ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm' 
+                  viewMode === 'grid'
+                    ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
@@ -172,8 +156,8 @@ const ProjectsPage = () => {
               <button
                 onClick={() => setViewMode('list')}
                 className={`p-3 rounded-lg transition-all duration-200 ${
-                  viewMode === 'list' 
-                    ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm' 
+                  viewMode === 'list'
+                    ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
@@ -206,17 +190,17 @@ const ProjectsPage = () => {
               </div>
             ))}
           </div>
-        ) : items.length === 0 ? (
-          <EmptyState />
         ) : (
-          <div className={`grid gap-8 ${
-            viewMode === 'grid' 
-              ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
-              : 'grid-cols-1'
-          }`}>
+          <div
+            className={`grid gap-8 ${
+              viewMode === 'grid'
+                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                : 'grid-cols-1'
+            }`}
+          >
             {items.map((project) => (
               <ProjectCard
-                key={project._id || project.id}
+                key={project._id}
                 project={project}
                 onMenuClick={handleProjectMenuClick}
               />
