@@ -1,5 +1,6 @@
 import Project from '../models/Project.js';
 import User from '../models/User.js';
+import { sendMail } from '../utils/mail.js';
 import {
   successResponse,
   errorResponse,
@@ -156,6 +157,13 @@ export const addMember = asyncHandler(async (req, res) => {
 
   project.addMember(userId, role);
   await project.save();
+
+  // Send email notification
+  await sendMail({
+    to: user.email,
+    subject: `You've been added to project ${project.name}`,
+    text: `Hello ${user.name},\n\nYou've been added to the project "${project.name}".`,
+  });
 
   const updated = await Project.findById(projectId)
     .populate('owner', 'name email avatar')

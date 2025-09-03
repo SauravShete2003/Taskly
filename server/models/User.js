@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema(
         validator: (v) => validator.isEmail(v),
         message: 'Please enter a valid email',
       },
+      index: true
     },
     password: {
       type: String,
@@ -102,7 +103,27 @@ userSchema.pre('findOneAndUpdate', async function (next) {
     if (update.$set?.password) update.$set.password = hashed;
 
     this.setUpdate(update);
-    next();
+    next();    // ...existing code...
+    exports.getProjects = async (req, res) => {
+      try {
+        const userId = req.user._id;
+        const userRole = req.user.role;
+    
+        let projects;
+        if (userRole === 'admin') {
+          // Global admin: see all projects
+          projects = await Project.find({});
+        } else {
+          // Member/viewer: see only projects where they are a member
+          projects = await Project.find({ members: userId });
+        }
+    
+        res.status(200).json({ projects });
+      } catch (error) {
+        res.status(500).json({ message: 'Error fetching projects', error });
+      }
+    };
+    // ...existing code...
   } catch (err) {
     next(err);
   }

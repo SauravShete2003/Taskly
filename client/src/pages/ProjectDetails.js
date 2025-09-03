@@ -313,7 +313,7 @@ const ProjectDetails = () => {
               </div>
             )}
 
-            <Link to={`/projects/${projectId}/boards`} className="text-blue-600 hover:text-blue-800" onClick={() => console.log("Navigating to boards")}>
+            <Link to={`/projects/${projectId}/boards`} className="text-blue-600 hover:text-blue-800">
               View Boards
             </Link>
           </div>

@@ -23,16 +23,18 @@ import { MESSAGES } from './utils/constants.js';
 // Load environment variables
 dotenv.config();
 
+// Initialize Express
 const app = express();
 const server = createServer(app);
 
 // Connect to database
 connectDB();
 
-// Ensure upload directories exist (after __dirname is defined)
+// Ensure upload directories exist
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const ensureUploadDirs = () => {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
   const uploadsDir = path.join(__dirname, 'uploads');
   const avatarsDir = path.join(uploadsDir, 'avatars');
 
@@ -43,8 +45,6 @@ const ensureUploadDirs = () => {
     console.error('❌ Failed to create upload directories:', error.message);
   }
 };
-
-// Call this after __dirname is properly defined
 ensureUploadDirs();
 
 // Middleware
@@ -56,6 +56,7 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -63,13 +64,6 @@ app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/boards', boardRoutes);
 app.use('/api/tasks', taskRoutes);
-
-// Serve static client (no framework)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const clientDir = path.resolve(__dirname, '../client');
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use(express.static(clientDir));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -91,12 +85,8 @@ app.use((err, req, res, next) => {
   );
 });
 
-// 404 handler
+// 404 handler (API only)
 app.use('*', (req, res) => {
-  // For non-API paths, return index.html (client-side routing)
-  if (!req.originalUrl.startsWith('/api/')) {
-    return res.sendFile(path.join(clientDir, 'index.html'));
-  }
   errorResponse(res, MESSAGES.ROUTE_NOT_FOUND, 404);
 });
 
