@@ -55,7 +55,6 @@ router.put(
 );
 
 // ================== Boards ==================
-// Mount all board-related routes under /projects/:projectId/boards
 router.use("/:projectId/boards", boardRoutes);
 
 export default router;

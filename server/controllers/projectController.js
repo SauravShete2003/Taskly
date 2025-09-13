@@ -126,110 +126,93 @@ export const deleteProject = asyncHandler(async (req, res) => {
 
   return successResponse(res, null, 'Project archived successfully');
 });
-
-// Add member to project (admin only)
+// user routes
+// ================== Members ==================
 export const addMember = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-  const { userId, role = PROJECT_ROLES.MEMBER } = req.body;
-  const currentUserId = req.user._id;
+  const { userId, role } = req.body;
 
-  const project = await Project.findById(projectId);
-  if (!project || project.isArchived) {
-    return notFoundResponse(res, 'Project not found');
+  const project = await Project.findById(projectId)
+    .populate("owner", "name email avatar")
+    .populate("members.user", "name email avatar");
+
+  if (!project) {
+    return notFoundResponse(res, "Project not found");
   }
 
-  if (!project.isAdmin(currentUserId)) {
-    return forbiddenResponse(res, 'Only admins can add members');
+  // prevent duplicates
+  if (project.members.some((m) => m.user.toString() === userId)) {
+    return errorResponse(res, "User already a member", HTTP_STATUS.BAD_REQUEST);
   }
 
-  const user = await User.findById(userId);
-  if (!user) return notFoundResponse(res, 'User not found');
-
-  if (project.isOwner(userId) || project.isMember(userId)) {
-    return errorResponse(res, 'User is already in this project', HTTP_STATUS.CONFLICT);
+  // validate role
+  const validRoles = Object.values(PROJECT_ROLES); // e.g. ["owner","admin","member","viewer"]
+  if (role && !validRoles.includes(role)) {
+    return errorResponse(res, "Invalid role", HTTP_STATUS.BAD_REQUEST);
   }
 
-  // Validate role against enum
-  const allowed = Object.values(PROJECT_ROLES);
-  if (!allowed.includes(role)) {
-    return errorResponse(res, 'Invalid role', HTTP_STATUS.BAD_REQUEST);
-  }
-
-  project.addMember(userId, role);
+  project.members.push({ user: userId, role: role || "member" });
   await project.save();
 
-  // Send email notification
-  await sendMail({
-    to: user.email,
-    subject: `You've been added to project ${project.name}`,
-    text: `Hello ${user.name},\n\nYou've been added to the project "${project.name}".`,
-  });
-
   const updated = await Project.findById(projectId)
-    .populate('owner', 'name email avatar')
-    .populate('members.user', 'name email avatar');
+    .populate("owner", "name email avatar")
+    .populate("members.user", "name email avatar");
 
-  return successResponse(res, { project: updated }, 'Member added successfully');
+  return successResponse(res, { project: updated }, "Member added successfully");
 });
 
-// Remove member (admin or self)
 export const removeMember = asyncHandler(async (req, res) => {
   const { projectId, userId } = req.params;
-  const currentUserId = req.user._id;
 
-  const project = await Project.findById(projectId);
-  if (!project || project.isArchived) {
-    return notFoundResponse(res, 'Project not found');
+  const project = await Project.findById(projectId)
+    .populate("owner", "name email avatar")
+    .populate("members.user", "name email avatar");
+
+  if (!project) {
+    return notFoundResponse(res, "Project not found");
   }
 
-  if (!project.isAdmin(currentUserId) && currentUserId.toString() !== userId) {
-    return forbiddenResponse(res, 'Only admins can remove members');
-  }
-
-  if (project.isOwner(userId)) {
-    return forbiddenResponse(res, 'Cannot remove project owner');
-  }
-
-  project.removeMember(userId);
+  project.members = project.members.filter(
+    (m) => m.user.toString() !== userId
+  );
   await project.save();
 
   const updated = await Project.findById(projectId)
-    .populate('owner', 'name email avatar')
-    .populate('members.user', 'name email avatar');
+    .populate("owner", "name email avatar")
+    .populate("members.user", "name email avatar");
 
-  return successResponse(res, { project: updated }, 'Member removed successfully');
+  return successResponse(res, { project: updated }, "Member removed successfully");
 });
 
-// Update member role (admin only)
 export const updateMemberRole = asyncHandler(async (req, res) => {
   const { projectId, userId } = req.params;
   const { role } = req.body;
-  const currentUserId = req.user._id;
 
-  const project = await Project.findById(projectId);
-  if (!project || project.isArchived) {
-    return notFoundResponse(res, 'Project not found');
+  const project = await Project.findById(projectId)
+    .populate("owner", "name email avatar")
+    .populate("members.user", "name email avatar");
+
+  if (!project) {
+    return notFoundResponse(res, "Project not found");
   }
 
-  if (!project.isAdmin(currentUserId)) {
-    return forbiddenResponse(res, 'Only admins can update member roles');
+  const member = project.members.find((m) => m.user.toString() === userId);
+  if (!member) {
+    return notFoundResponse(res, "Member not found");
   }
 
-  if (project.isOwner(userId)) {
-    return forbiddenResponse(res, 'Cannot change owner role');
+  // validate role
+  const validRoles = Object.values(PROJECT_ROLES);
+  if (!validRoles.includes(role)) {
+    return errorResponse(res, "Invalid role", HTTP_STATUS.BAD_REQUEST);
   }
 
-  const allowed = Object.values(PROJECT_ROLES);
-  if (!allowed.includes(role)) {
-    return errorResponse(res, 'Invalid role', HTTP_STATUS.BAD_REQUEST);
-  }
-
-  project.updateMemberRole(userId, role);
+  member.role = role;
   await project.save();
 
   const updated = await Project.findById(projectId)
-    .populate('owner', 'name email avatar')
-    .populate('members.user', 'name email avatar');
+    .populate("owner", "name email avatar")
+    .populate("members.user", "name email avatar");
 
-  return successResponse(res, { project: updated }, 'Member role updated successfully');
+  return successResponse(res, { project: updated }, "Member role updated successfully");
 });
