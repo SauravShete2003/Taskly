@@ -1,7 +1,6 @@
 // client/src/services/auth.js
 import api from './api';
 
-// Tries common places: data.token, data.accessToken, data.jwt, or nested under data.data
 function extractToken(root) {
   const candidates = [
     root?.data?.token,
@@ -73,7 +72,7 @@ export const authService = {
 
   updateProfile: async (userData) => {
     const res = await api.put('/users/me', userData);
-    return res.data;
+    return res.data.user;
   },
 
   changePassword: async (passwordData) => {
@@ -81,14 +80,9 @@ export const authService = {
     return res.data;
   },
 
-  // Search users by name or email
-  searchUsers: async (query) => {
-    if (!query || query.trim().length < 2) {
-      return [];
-    }
+  async searchUsers(query) {
     const res = await api.get(`/users/search?q=${encodeURIComponent(query)}`);
-    return res.data?.users || [];
+    return res.data;
   },
 };
-
 export default authService;

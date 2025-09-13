@@ -13,15 +13,12 @@ export const searchUsers = asyncHandler(async (req, res) => {
     );
   }
 
-  const users = await User.find({
-    $or: [
-      { name: { $regex: q, $options: 'i' } },
-      { email: { $regex: q, $options: 'i' } },
-    ],
-    _id: { $ne: req.user._id }, // Exclude current logged-in user
-  })
-    .select('_id name email avatar')
-    .limit(10);
-
+const users = await User.find({
+  $or: [
+    { name: { $regex: q, $options: 'i' } },
+    { email: { $regex: q, $options: 'i' } }
+  ],
+  _id: { $ne: req.user._id }
+}).select('_id name email avatar');   // <-- make sure this stays
   return successResponse(res, { users });
 });

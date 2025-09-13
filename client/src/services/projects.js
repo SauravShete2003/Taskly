@@ -46,30 +46,26 @@ export const projectService = {
     return res?.data || { success: true };
   },
 
-  addMember: async (projectId, userId, role = 'member') => {
-    if (!projectId || projectId === 'undefined') {
-      console.warn('Invalid projectId provided to addMember:', projectId);
-      throw new Error('Invalid project ID provided');
-    }
-    const res = await api.post(`/projects/${projectId}/members`, { userId, role });
-    return extractProject(res);
-  },
+   // ...existing code...
+async addMember(projectId, userId, role = "member") {
+  const res = await api.post(`/projects/${projectId}/members`, {
+    userId,
+    role,
+  });
+  return extractProject(res);
+  
+},
+// Remove member
+async removeMember(projectId, userId) {
+  const res = await api.delete(`/projects/${projectId}/members/${userId}`);
+  return extractProject(res);
+},
 
-  removeMember: async (projectId, userId) => {
-    if (!projectId || projectId === 'undefined') {
-      console.warn('Invalid projectId provided to removeMember:', projectId);
-      throw new Error('Invalid project ID provided');
-    }
-    const res = await api.delete(`/projects/${projectId}/members/${userId}`);
-    return extractProject(res);
-  },
-
-  updateMemberRole: async (projectId, userId, role) => {
-    if (!projectId || projectId === 'undefined') {
-      console.warn('Invalid projectId provided to updateMemberRole:', projectId);
-      throw new Error('Invalid project ID provided');
-    }
-    const res = await api.put(`/projects/${projectId}/members/${userId}`, { role });
-    return extractProject(res);
-  },
+// Update member role
+async updateMemberRole(projectId, userId, role) {
+  const res = await api.put(`/projects/${projectId}/members/${userId}`, {
+    role,
+  });
+  return extractProject(res);
+},
 };
