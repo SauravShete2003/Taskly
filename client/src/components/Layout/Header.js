@@ -8,7 +8,6 @@ import {
   X, 
   Sun, 
   Moon, 
-  Bell,
   Search,
   Plus
 } from 'lucide-react';
@@ -141,13 +140,6 @@ const Header = ({ onMenuClick }) => {
             >
               {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
-
-            {/* Notifications */}
-            <button className="p-2 text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-danger-500 rounded-full"></span>
-            </button>
-
             {/* New Project Button */}
             <Link 
               to="/projects/new" 

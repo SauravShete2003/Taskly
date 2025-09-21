@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 
 const ProjectCard = ({ project, onMenuClick }) => {
-  // Local menu state for the 3-dot actions
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -45,16 +44,19 @@ const ProjectCard = ({ project, onMenuClick }) => {
   const projectColor = getProjectColor(project.color);
 
   return (
-    <div className="card group hover:shadow-xl transition-all duration-300 hover-lift">
+    <div className="relative group rounded-2xl border border-gray-200 dark:border-gray-700 
+      bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm 
+      shadow-md hover:shadow-2xl transition-all duration-300 p-5 flex flex-col justify-between">
+
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3 flex-1 min-w-0">
           <div 
-            className="project-color w-5 h-5 rounded-full border-2 border-white shadow-sm flex-shrink-0"
+            className="w-5 h-5 rounded-full border border-white shadow-sm flex-shrink-0"
             style={{ backgroundColor: projectColor }}
           />
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
               {project.name}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
@@ -62,7 +64,8 @@ const ProjectCard = ({ project, onMenuClick }) => {
             </p>
           </div>
         </div>
-        
+
+        {/* Menu */}
         <div className="relative flex items-center flex-shrink-0" ref={menuRef}>
           <button
             onClick={(e) => {
@@ -70,38 +73,35 @@ const ProjectCard = ({ project, onMenuClick }) => {
               setMenuOpen((v) => !v);
               onMenuClick?.(project, e);
             }}
-            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
+            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 
+              transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <MoreVertical className="h-4 w-4" />
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 top-8 z-20 w-44 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl py-1 animate-in fade-in zoom-in-95">
+            <div className="absolute right-0 top-8 z-20 w-48 rounded-xl border border-gray-200 dark:border-gray-700 
+              bg-white dark:bg-gray-800 shadow-xl py-1 animate-in fade-in zoom-in-95">
               <Link
                 to={`/projects/${project._id || project.id}`}
-                className="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"
                 onClick={() => setMenuOpen(false)}
               >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Open Project
+                <ExternalLink className="h-4 w-4 mr-2" /> Open Project
               </Link>
               <Link
                 to={`/projects/${project._id || project.id}/boards`}
-                className="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"
                 onClick={() => setMenuOpen(false)}
               >
-                <KanbanSquare className="h-4 w-4 mr-2" />
-                Show Boards / Tasks
+                <KanbanSquare className="h-4 w-4 mr-2" /> Show Boards / Tasks
               </Link>
               <Link
                 to={`/projects/${project._id || project.id}/edit`}
-                className="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"
                 onClick={() => setMenuOpen(false)}
               >
-                <Edit3 className="h-4 w-4 mr-2" />
-                Edit Project
+                <Edit3 className="h-4 w-4 mr-2" /> Edit Project
               </Link>
             </div>
           )}
@@ -109,19 +109,16 @@ const ProjectCard = ({ project, onMenuClick }) => {
       </div>
 
       {/* Description */}
-      <p className="text-sm text-gray-600 dark:text-gray-400 mb-5 line-clamp-2 leading-relaxed">
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 leading-relaxed">
         {project.description || "No description available"}
       </p>
 
-      {/* Progress removed by request */}
-
-      {/* Project Stats */}
+      {/* Stats */}
       <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-5">
         <div className="flex items-center space-x-1.5">
           <Users className="h-4 w-4 text-gray-400" />
           <span className="font-medium">{membersCount} member{membersCount !== 1 ? 's' : ''}</span>
         </div>
-        
         {project.deadline && (
           <div className="flex items-center space-x-1.5">
             <Calendar className="h-4 w-4 text-gray-400" />
@@ -130,24 +127,27 @@ const ProjectCard = ({ project, onMenuClick }) => {
         )}
       </div>
 
-      {/* Footer Actions */}
+      {/* Footer */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
         <div className="flex items-center space-x-2">
           <span 
-            className="w-3 h-3 rounded-full border-2 border-white shadow-sm"
+            className="w-3 h-3 rounded-full border border-white shadow-sm"
             style={{ backgroundColor: projectColor }}
           />
           <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
             {project.isPublic ? 'Public' : 'Private'}
           </span>
         </div>
-        
+
         <Link
           to={`/projects/${project._id || project.id}`}
-          className="btn-secondary text-sm px-4 py-2.5 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-300 transition-all duration-200 font-medium"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium 
+            border border-gray-300 dark:border-gray-600 rounded-lg 
+            text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 
+            hover:bg-primary-50 hover:text-primary-600 hover:border-primary-300 
+            dark:hover:bg-gray-800 transition-all duration-200"
         >
-          <FolderOpen className="h-4 w-4 mr-2" />
-          View Project
+          <FolderOpen className="h-4 w-4" /> View Project
         </Link>
       </div>
     </div>

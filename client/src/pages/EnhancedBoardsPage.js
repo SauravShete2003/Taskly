@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import {
@@ -6,7 +5,6 @@ import {
 } from '../services/boards';
 import BoardCard from '../components/BoardCard';
 import StatisticsCard from '../components/StatisticsCard';
-import Notification from '../components/Notification';
 import { CheckCircle, Clock, List as ListIcon, AlertCircle } from 'lucide-react';
 import taskService from '../services/tasks';
 
@@ -18,21 +16,16 @@ export default function EnhancedBoardsPage() {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ name: '', description: '' });
   const [error, setError] = useState(null);
-  const [notification, setNotification] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [projectStats, setProjectStats] = useState({
     totalTasks: 0,
     completedTasks: 0,
     inProgressTasks: 0,
     overdueTasks: 0,
-    completionRate: 0
+    completionRate: 0,
   });
 
   const isInvalidProjectId = !projectId || projectId === 'undefined';
-
-  const showNotification = (message, type = 'info') => {
-    setNotification({ message, type });
-  };
 
   const sortedBoards = useMemo(() => {
     return [...boards].sort((a, b) => {
@@ -43,11 +36,12 @@ export default function EnhancedBoardsPage() {
 
   const filteredBoards = useMemo(() => {
     let filtered = sortedBoards;
-    
+
     if (searchTerm) {
-      filtered = filtered.filter(board =>
-        board.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        board.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (board) =>
+          board.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          board.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -58,49 +52,54 @@ export default function EnhancedBoardsPage() {
     try {
       setLoading(true);
       const data = await getBoards(projectId);
-      // Filter out boards with undefined or missing _id
-      const validBoards = data.filter(board => board._id !== undefined && board._id !== null);
+      const validBoards = data.filter((board) => board._id !== undefined && board._id !== null);
       setBoards(validBoards);
     } catch (e) {
       setError(e?.response?.data?.message || 'Failed to load boards');
-      showNotification(e?.response?.data?.message || 'Failed to load boards', 'error');
     } finally {
       setLoading(false);
     }
   }, [projectId]);
 
- const fetchProjectStats = useCallback(async () => {
-  try {
-    setStatsLoading(true);
-    let total = 0, completed = 0, inProgress = 0, overdue = 0;
+  const fetchProjectStats = useCallback(async () => {
+    try {
+      setStatsLoading(true);
+      let total = 0,
+        completed = 0,
+        inProgress = 0,
+        overdue = 0;
 
-    // Filter out boards with invalid IDs before making API calls
-    const validBoards = boards.filter(board => board._id && board._id !== 'undefined');
-    
-    for (const board of validBoards) {
-      const tasks = await taskService.getTasks(board._id); 
-      total += tasks.length;
-      completed += tasks.filter(t => t.status === "done" || t.isCompleted).length;
-      inProgress += tasks.filter(t => t.status === "in_progress").length;
-      overdue += tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && !t.isCompleted && t.status !== "done").length;
+      const validBoards = boards.filter((board) => board._id && board._id !== 'undefined');
+
+      for (const board of validBoards) {
+        const tasks = await taskService.getTasks(board._id);
+        total += tasks.length;
+        completed += tasks.filter((t) => t.status === 'done' || t.isCompleted).length;
+        inProgress += tasks.filter((t) => t.status === 'in_progress').length;
+        overdue += tasks.filter(
+          (t) =>
+            t.dueDate &&
+            new Date(t.dueDate) < new Date() &&
+            !t.isCompleted &&
+            t.status !== 'done'
+        ).length;
+      }
+
+      const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+      setProjectStats({
+        totalTasks: total,
+        completedTasks: completed,
+        inProgressTasks: inProgress,
+        overdueTasks: overdue,
+        completionRate,
+      });
+    } catch (e) {
+      console.error('Failed to fetch project stats:', e);
+    } finally {
+      setStatsLoading(false);
     }
-
-    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-    setProjectStats({
-      totalTasks: total,
-      completedTasks: completed,
-      inProgressTasks: inProgress,
-      overdueTasks: overdue,
-      completionRate
-    });
-  } catch (e) {
-    console.error("Failed to fetch project stats:", e);
-  } finally {
-    setStatsLoading(false);
-  }
-}, [boards]);
-
+  }, [boards]);
 
   useEffect(() => {
     if (boards.length > 0) {
@@ -117,7 +116,6 @@ export default function EnhancedBoardsPage() {
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!form.name.trim()) {
-      showNotification('Board name is required', 'error');
       return;
     }
 
@@ -129,9 +127,8 @@ export default function EnhancedBoardsPage() {
       });
       setForm({ name: '', description: '' });
       setBoards((prev) => [...prev, newBoard]);
-      showNotification('Board created successfully!', 'success');
     } catch (e) {
-      showNotification(e?.response?.data?.message || 'Failed to create board', 'error');
+      console.error('Failed to create board:', e);
     } finally {
       setCreating(false);
     }
@@ -141,9 +138,8 @@ export default function EnhancedBoardsPage() {
     try {
       await deleteBoard(boardId);
       setBoards((prev) => prev.filter((b) => b._id !== boardId));
-      showNotification('Board deleted successfully', 'success');
     } catch (e) {
-      showNotification(e?.response?.data?.message || 'Failed to delete board', 'error');
+      console.error('Failed to delete board:', e);
     }
   };
 
@@ -151,10 +147,9 @@ export default function EnhancedBoardsPage() {
     try {
       const updated = await updateBoard(boardId, updates);
       setBoards((prev) => prev.map((b) => (b._id === boardId ? updated : b)));
-      showNotification('Board updated successfully', 'success');
       return updated;
     } catch (e) {
-      showNotification(e?.response?.data?.message || 'Failed to update board', 'error');
+      console.error('Failed to update board:', e);
       throw e;
     }
   };
@@ -179,15 +174,10 @@ export default function EnhancedBoardsPage() {
         boardId: b._id,
         order: index,
       }));
-      
-      // Debug: Log the data being sent
       console.log('Sending board orders:', boardOrders);
-      
       await reorderBoards(boardOrders);
-      showNotification('Board order saved successfully', 'success');
     } catch (e) {
-      console.error('Reorder error:', e);
-      showNotification(e?.response?.data?.message || 'Failed to save order', 'error');
+      console.error('Failed to save board order:', e);
     }
   };
 
@@ -222,14 +212,6 @@ export default function EnhancedBoardsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {notification && (
-        <Notification
-          message={notification.message}
-          type={notification.type}
-          onClose={() => setNotification(null)}
-        />
-      )}
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -238,15 +220,26 @@ export default function EnhancedBoardsPage() {
                 to={`/projects/${projectId}`}
                 className="text-blue-600 hover:text-blue-800 flex items-center"
               >
-                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <svg
+                  className="w-5 h-5 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
                 </svg>
                 Back to Project
               </Link>
               <h1 className="text-3xl font-bold text-gray-900">Boards</h1>
             </div>
             <div className="text-sm text-gray-500">
-              {filteredBoards.length} board{filteredBoards.length !== 1 ? 's' : ''}
+              {filteredBoards.length} board
+              {filteredBoards.length !== 1 ? 's' : ''}
             </div>
           </div>
 
@@ -298,7 +291,10 @@ export default function EnhancedBoardsPage() {
             </div>
           </div>
 
-          <form onSubmit={handleCreate} className="bg-white p-6 rounded-lg shadow mb-6">
+          <form
+            onSubmit={handleCreate}
+            className="bg-white p-6 rounded-lg shadow mb-6"
+          >
             <h2 className="text-lg font-semibold mb-4">Create New Board</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <input
@@ -313,7 +309,9 @@ export default function EnhancedBoardsPage() {
                 type="text"
                 placeholder="Description (optional)"
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
                 className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
               />
               <button
@@ -354,12 +352,26 @@ export default function EnhancedBoardsPage() {
 
           {filteredBoards.length === 0 && (
             <div className="text-center py-12">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              <svg
+                className="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                />
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No boards found</h3>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">
+                No boards found
+              </h3>
               <p className="mt-1 text-sm text-gray-500">
-                {searchTerm ? 'No boards match your search.' : 'Get started by creating a new board.'}
+                {searchTerm
+                  ? 'No boards match your search.'
+                  : 'Get started by creating a new board.'}
               </p>
             </div>
           )}
