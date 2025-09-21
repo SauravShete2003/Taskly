@@ -1,15 +1,10 @@
-import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Folder, 
   CheckSquare, 
   Users, 
-  BarChart3, 
   Settings, 
-  Calendar,
-  MessageSquare,
-  FileText
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onClose }) => {

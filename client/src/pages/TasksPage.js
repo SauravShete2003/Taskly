@@ -1,6 +1,5 @@
-import React from 'react';
 import Layout from '../components/Layout/Layout';
-import { CheckSquare, Plus, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { CheckSquare, Plus, } from 'lucide-react';
 
 const TasksPage = () => {
   // Mock tasks data for demonstration
@@ -39,18 +38,18 @@ const TasksPage = () => {
     }
   ];
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-success-600" />;
-      case 'in-progress':
-        return <Clock className="h-4 w-4 text-warning-600" />;
-      case 'overdue':
-        return <AlertCircle className="h-4 w-4 text-danger-600" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-400" />;
-    }
-  };
+  // const getStatusIcon = (status) => {
+  //   switch (status) {
+  //     case 'completed':
+  //       return <CheckCircle className="h-4 w-4 text-success-600" />;
+  //     case 'in-progress':
+  //       return <Clock className="h-4 w-4 text-warning-600" />;
+  //     case 'overdue':
+  //       return <AlertCircle className="h-4 w-4 text-danger-600" />;
+  //     default:
+  //       return <Clock className="h-4 w-4 text-gray-400" />;
+  //   }
+  // };
 
   const getStatusColor = (status) => {
     switch (status) {

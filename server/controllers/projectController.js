@@ -1,6 +1,4 @@
 import Project from '../models/Project.js';
-import User from '../models/User.js';
-import { sendMail } from '../utils/mail.js';
 import {
   successResponse,
   errorResponse,

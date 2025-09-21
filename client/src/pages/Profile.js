@@ -9,7 +9,7 @@ export default function Profile() {
   const [pwdSaving, setPwdSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const [user, setUser] = useState(null);
+  // const [user, setUser] = useState(null);
 
   // Profile form
   const [name, setName] = useState('');
@@ -36,7 +36,6 @@ export default function Profile() {
       .then((res) => {
         if (!alive) return;
         const u = res.data?.data?.user || res.data?.user || res.data;
-        setUser(u);
         setName(u?.name || '');
         setEmail(u?.email || '');
         setAvatarPreview(fileUrl(u?.avatar));
@@ -57,7 +56,6 @@ export default function Profile() {
     try {
       const res = await api.put('/users/me', { name });
       const u = res.data?.data?.user || res.data?.user;
-      setUser(u);
       setMessage('Profile updated');
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -96,7 +94,6 @@ export default function Profile() {
       fd.append('avatar', avatarFile);
       const res = await api.post('/users/me/avatar', fd);
       const u = res.data?.data?.user || res.data?.user;
-      setUser(u);
       setAvatarFile(null);
       setAvatarPreview(fileUrl(u?.avatar));
       setMessage('Avatar updated');

@@ -20,10 +20,6 @@ export const authService = {
     const res = await api.post(
       '/auth/login',
       { email, password },
-      {
-        _skipAuthHeader: true,   // don't send stale token
-        _skipAuthRedirect: true, // don't hard-redirect on 401 here
-      }
     );
 
     const token =
@@ -73,11 +69,6 @@ export const authService = {
   updateProfile: async (userData) => {
     const res = await api.put('/users/me', userData);
     return res.data.user;
-  },
-
-  changePassword: async (passwordData) => {
-    const res = await api.put('/auth/change-password', passwordData);
-    return res.data;
   },
 
   async searchUsers(query) {
