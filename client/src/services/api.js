@@ -1,7 +1,13 @@
 // client/src/services/api.js
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+// Prefer an explicit environment variable. When not set, use localhost only
+// for local development. For deployed frontends (e.g. Render/Netlify/Vercel)
+// a relative '/api' path is safer so the browser hits the same host where the
+// backend is proxied or hosted, instead of trying to connect to localhost.
+const explicitUrl = process.env.REACT_APP_API_URL;
+const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+const API_BASE_URL = explicitUrl || (isLocalhost ? 'http://localhost:5000/api' : '/api');
 
 const api = axios.create({
   baseURL: API_BASE_URL,
