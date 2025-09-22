@@ -22,12 +22,25 @@ export const authService = {
       { email, password },
     );
 
-    const token =
-      extractToken(res.data?.data) || extractToken(res.data);
+    // Try multiple shapes: nested data, top-level, or headers
+    let token = extractToken(res.data?.data) || extractToken(res.data);
+
+    // Fallback: some backends send token in headers (x-access-token or authorization)
+    if (!token) {
+      const hdrToken = res?.headers?.['x-access-token'] || res?.headers?.['x_access_token'] || res?.headers?.authorization;
+      if (hdrToken) {
+        // strip Bearer if present
+        token = hdrToken.replace(/^Bearer\s+/i, '');
+      }
+    }
 
     if (!token) {
-      console.warn('Login response missing token. Response was:', res.data);
-      throw new Error('NO_TOKEN');
+      // Provide more helpful error with the server response attached
+      console.warn('Login response missing token. Response was:', res?.data || res);
+      const message = res?.data?.message || 'Server did not include a token. Check API response (data.token/accessToken or Authorization header).';
+      const err = new Error(message);
+      err.response = res;
+      throw err;
     }
 
     localStorage.setItem('token', token);
