@@ -75,6 +75,14 @@ export const login = asyncHandler(async (req, res) => {
   user.lastLogin = new Date();
   await user.save();
 
+  // Debug logging: show that we're returning a token for this user
+  if (process.env.NODE_ENV === 'development' || process.env.DEBUG_AUTH === 'true') {
+    console.info('[authController] login:', {
+      userId: user._id.toString(),
+      tokenPreview: token ? `${token.slice(0, 10)}...` : null,
+    });
+  }
+
   return successResponse(res, {
     user: user.getProfile(),
     token
