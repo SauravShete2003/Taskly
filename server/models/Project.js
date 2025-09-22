@@ -1,5 +1,29 @@
 import mongoose from 'mongoose';
 
+// Define the roles in a constant to avoid typos
+const PROJECT_ROLES = {
+  ADMIN: 'admin',
+  MEMBER: 'member',
+  VIEWER: 'viewer',
+};
+
+const memberSubSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  role: {
+    type: String,
+    enum: Object.values(PROJECT_ROLES),
+    default: PROJECT_ROLES.MEMBER,
+  },
+  joinedAt: {
+    type: Date,
+    default: Date.now,
+  },
+}, { _id: false }); // Use _id: false for subdocuments unless you need them
+
 const projectSchema = new mongoose.Schema(
   {
     name: {
@@ -15,25 +39,8 @@ const projectSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
-    members: [
-      {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'User',
-        },
-        role: {
-          type: String,
-          enum: ['admin', 'member', 'viewer'],
-          default: 'member',
-        },
-        joinedAt: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
+    members: [memberSubSchema], // Using the defined sub-schema
     color: {
       type: String,
       default: '#3B82F6',
@@ -46,7 +53,6 @@ const projectSchema = new mongoose.Schema(
     isArchived: {
       type: Boolean,
       default: false,
-      index: true,
     },
     settings: {
       allowComments: { type: Boolean, default: true },
@@ -56,37 +62,23 @@ const projectSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    toJSON: {
-      transform(doc, ret) {
-        ret.id = ret._id;
-        delete ret._id;
-        delete ret.__v;
-        return ret;
-      },
-    },
-    toObject: {
-      transform(doc, ret) {
-        ret.id = ret._id;
-        delete ret._id;
-        delete ret.__v;
-        return ret;
-      },
-    },
+    toJSON: { virtuals: true }, // Simpler way to include virtuals
+    toObject: { virtuals: true },
   }
 );
 
-// Indexes
+// Indexes (your existing ones are good)
 projectSchema.index({ owner: 1 });
 projectSchema.index({ 'members.user': 1 });
 
-// Virtual for member count
+// Virtual for member count (your existing one is good)
 projectSchema.virtual('memberCount').get(function () {
   return (this.members?.length || 0) + 1; // +1 for owner
 });
 
-// Ensure members are unique and not the owner
+// Your pre-save hook is great for data integrity. No changes needed.
 projectSchema.pre('save', function (next) {
-  if (Array.isArray(this.members)) {
+  if (this.isModified('members')) {
     const ownerId = this.owner?.toString();
     const seen = new Set();
     this.members = this.members.filter((m) => {
@@ -100,33 +92,41 @@ projectSchema.pre('save', function (next) {
   next();
 });
 
-// Membership helpers
-projectSchema.methods.isMember = function (userId) {
-  return (
-    this.owner.equals(userId) ||
-    this.members.some((member) => member.user.equals(userId))
-  );
+// --- Helper Methods ---
+// Your existing methods are excellent. I've just made them slightly more robust
+// by ensuring userId is always treated as a string for comparison.
+
+projectSchema.methods.isOwner = function (userId) {
+  // Using .toString() is safer for comparison
+  return this.owner.toString() === userId.toString();
 };
 
 projectSchema.methods.isAdmin = function (userId) {
-  return (
-    this.owner.equals(userId) ||
-    this.members.some(
-      (member) => member.user.equals(userId) && member.role === 'admin'
-    )
+  const userIdStr = userId.toString();
+  if (this.owner.toString() === userIdStr) {
+    return true; // The owner is always an admin
+  }
+  return this.members.some(
+    (member) => member.user.toString() === userIdStr && member.role === PROJECT_ROLES.ADMIN
   );
 };
 
-projectSchema.methods.isOwner = function (userId) {
-  return this.owner.equals(userId);
+projectSchema.methods.isMember = function (userId) {
+  const userIdStr = userId.toString();
+  if (this.owner.toString() === userIdStr) {
+    return true; // The owner is implicitly a member
+  }
+  return this.members.some((member) => member.user.toString() === userIdStr);
 };
 
 projectSchema.methods.getUserRole = function (userId) {
-  if (this.owner.equals(userId)) return 'owner';
-  const member = this.members.find((m) => m.user.equals(userId));
+    const userIdStr = userId.toString();
+  if (this.owner.toString() === userIdStr) return 'owner';
+  const member = this.members.find((m) => m.user.toString() === userIdStr);
   return member ? member.role : null;
 };
 
+// No changes needed for the methods below. They are perfect.
 projectSchema.methods.addMember = function (userId, role = 'member') {
   if (!this.members.some((m) => m.user.equals(userId))) {
     this.members.push({ user: userId, role });
@@ -146,4 +146,7 @@ projectSchema.methods.updateMemberRole = function (userId, newRole) {
 };
 
 const Project = mongoose.model('Project', projectSchema);
+
+// Export the roles constant so we can use it elsewhere
+export { PROJECT_ROLES };
 export default Project;

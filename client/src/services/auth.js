@@ -73,7 +73,10 @@ export const authService = {
 
   async searchUsers(query) {
     const res = await api.get(`/users/search?q=${encodeURIComponent(query)}`);
-    return res.data;
+    // normalize to return an array of user objects
+    return (
+      res?.data?.data?.users || res?.data?.users || res?.data || []
+    );
   },
 };
 export default authService;

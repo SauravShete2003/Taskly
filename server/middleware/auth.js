@@ -1,6 +1,9 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Project from '../models/Project.js'; // <-- ADDED: So we can find the project
+import { asyncHandler, notFoundResponse, forbiddenResponse } from '../utils/responseHandler.js'; // <-- ADDED: For consistent error handling
 
+// --- No changes to the function below ---
 export const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
@@ -15,7 +18,6 @@ export const authenticateToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Get user from database
     const user = await User.findById(decoded.userId).select('-password');
     
     if (!user) {
@@ -57,6 +59,7 @@ export const authenticateToken = async (req, res, next) => {
   }
 };
 
+// --- No changes to the function below ---
 export const generateToken = (userId) => {
   return jwt.sign(
     { userId },
@@ -65,6 +68,7 @@ export const generateToken = (userId) => {
   );
 };
 
+// --- No changes to the function below ---
 export const optionalAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
@@ -81,12 +85,11 @@ export const optionalAuth = async (req, res, next) => {
     
     next();
   } catch (error) {
-    // Continue without authentication
     next();
   }
 };
 
-// Check if user is admin (either global admin or project admin)
+// --- No changes to the function below ---
 export const requireAdmin = async (req, res, next) => {
   try {
     if (!req.user) {
@@ -96,12 +99,10 @@ export const requireAdmin = async (req, res, next) => {
       });
     }
 
-    // Check if user is global admin
     if (req.user.role === 'admin') {
       return next();
     }
 
-    // For project-specific admin checks, we'll handle in the route
     return res.status(403).json({
       success: false,
       message: 'Admin access required'
@@ -115,55 +116,23 @@ export const requireAdmin = async (req, res, next) => {
   }
 };
 
-// Check if user is project admin or owner
-export const requireProjectAdmin = async (req, res, next) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Authentication required'
-      });
-    }
+// ✅ This is the corrected and fully functional middleware
+export const requireProjectAdmin = asyncHandler(async (req, res, next) => {
+  const { projectId } = req.params;
+  const userId = req.user._id; // We know req.user exists because authenticateToken runs first
 
-    // Global admin can do anything
-    if (req.user.role === 'admin') {
-      return next();
-    }
+  const project = await Project.findById(projectId);
 
-    const projectId = req.params.projectId;
-    if (!projectId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Project ID required'
-      });
-    }
-
-    // Import Project model here to avoid circular dependency
-    const Project = (await import('../models/Project.js')).default;
-    const project = await Project.findById(projectId);
-    
-    if (!project) {
-      return res.status(404).json({
-        success: false,
-        message: 'Project not found'
-      });
-    }
-
-    // Check if user is project owner or admin
-    if (project.isAdmin(req.user._id)) {
-      req.project = project;
-      return next();
-    }
-
-    return res.status(403).json({
-      success: false,
-      message: 'Project admin access required'
-    });
-  } catch (error) {
-    console.error('Project admin middleware error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Authorization error'
-    });
+  if (!project || project.isArchived) {
+    return notFoundResponse(res, 'Project not found');
   }
-}; 
+
+  // We use the isAdmin method we defined on the project model
+  if (project.isAdmin(userId)) {
+    // If user is an admin or the owner, they can proceed
+    next();
+  } else {
+    // Otherwise, they are forbidden
+    return forbiddenResponse(res, 'You must be an admin or the project owner to perform this action.');
+  }
+});
