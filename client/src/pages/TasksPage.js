@@ -1,55 +1,88 @@
+import { useEffect, useState } from 'react';
 import Layout from '../components/Layout/Layout';
-import { CheckSquare, Plus, } from 'lucide-react';
+import { CheckSquare, Plus } from 'lucide-react';
+import { projectService } from '../services/projects';
+import { authService } from '../services/auth';
+import * as boardService from '../services/boards';
+import taskService from '../services/tasks';
 
 const TasksPage = () => {
-  // Mock tasks data for demonstration
-  const mockTasks = [
-    {
-      id: 1,
-      title: 'Design homepage layout',
-      status: 'completed',
-      priority: 'high',
-      project: 'Website Redesign',
-      dueDate: '2024-01-15'
-    },
-    {
-      id: 2,
-      title: 'Implement user authentication',
-      status: 'in-progress',
-      priority: 'high',
-      project: 'Mobile App Development',
-      dueDate: '2024-02-01'
-    },
-    {
-      id: 3,
-      title: 'Write API documentation',
-      status: 'pending',
-      priority: 'medium',
-      project: 'Mobile App Development',
-      dueDate: '2024-02-15'
-    },
-    {
-      id: 4,
-      title: 'Review marketing materials',
-      status: 'overdue',
-      priority: 'low',
-      project: 'Marketing Campaign Q1',
-      dueDate: '2024-01-10'
-    }
-  ];
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // const getStatusIcon = (status) => {
-  //   switch (status) {
-  //     case 'completed':
-  //       return <CheckCircle className="h-4 w-4 text-success-600" />;
-  //     case 'in-progress':
-  //       return <Clock className="h-4 w-4 text-warning-600" />;
-  //     case 'overdue':
-  //       return <AlertCircle className="h-4 w-4 text-danger-600" />;
-  //     default:
-  //       return <Clock className="h-4 w-4 text-gray-400" />;
-  //   }
-  // };
+  useEffect(() => {
+    let mounted = true;
+    const loadAllTasks = async () => {
+      setLoading(true);
+      setError(null);
+      // Quick guard: if there's no token, avoid making protected API calls
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please sign in to view tasks.');
+        setLoading(false);
+        return;
+      }
+      try {
+        // 1. Get projects the user has access to
+        const projects = await projectService.getProjects();
+
+        // 2. For each project, fetch its boards
+        // If a particular project's boards request fails (403/forbidden), skip it
+        const projectBoards = await Promise.all(
+          projects.map(async (p) => {
+            try {
+              const boards = await boardService.getBoards(p._id);
+              return { project: p, boards };
+            } catch (err) {
+              // If forbidden, user may not have access to this project anymore; skip
+              console.warn(`Unable to load boards for project ${p._id}:`, err?.response?.status || err?.message);
+              return { project: p, boards: [] };
+            }
+          })
+        );
+
+        // 3. For each board fetch tasks and enrich with project/board info
+        const tasksByBoardPromises = projectBoards.flatMap(({ project, boards }) =>
+          boards.map(async (b) => {
+            try {
+              const boardTasks = await taskService.getTasks(b._id);
+              // ensure array
+              return (boardTasks || []).map((t) => ({ ...t, board: b, project }));
+            } catch (err) {
+              console.warn(`Unable to load tasks for board ${b._id}:`, err?.response?.status || err?.message);
+              return [];
+            }
+          })
+        );
+
+        const nested = await Promise.all(tasksByBoardPromises);
+        const flat = nested.flat();
+
+        if (mounted) {
+          setTasks(flat);
+        }
+      } catch (err) {
+        console.error('Failed to load tasks:', err);
+        if (!mounted) return;
+        const status = err?.response?.status;
+        if (status === 401) {
+          setError('Not authenticated. Please sign in again.');
+        } else if (status === 403) {
+          setError('Access denied. You do not have permission to view these tasks.');
+        } else {
+          setError(err?.response?.data?.message || err?.message || 'Failed to load tasks');
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    loadAllTasks();
+    return () => { mounted = false; };
+  }, []);
+
+  // const getStatusIcon = (status) => { ... }
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -77,6 +110,18 @@ const TasksPage = () => {
     }
   };
 
+  if (loading) return (
+    <Layout showSidebar>
+      <div className="p-8">Loading tasks…</div>
+    </Layout>
+  );
+
+  if (error) return (
+    <Layout showSidebar>
+      <div className="p-8 text-red-600">{error}</div>
+    </Layout>
+  );
+
   return (
     <Layout showSidebar={true}>
       <div className="space-y-10">
@@ -96,49 +141,49 @@ const TasksPage = () => {
           </button>
         </div>
 
-        {/* Tasks List */}
+         {/* Tasks List */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
           <div className="px-8 py-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              All Tasks ({mockTasks.length})
-            </h2>
+             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+               All Tasks ({tasks.length})
+             </h2>
           </div>
           
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {mockTasks.map((task) => (
-              <div key={task.id} className="px-8 py-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <CheckSquare className="h-6 w-6 text-gray-400" />
-                    <div>
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
-                        {task.title}
-                      </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                        {task.project}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-4">
-                    <span className={`px-3 py-1.5 text-sm font-semibold rounded-full ${getStatusColor(task.status)}`}>
-                      {task.status.replace('-', ' ')}
-                    </span>
-                    <span className={`px-3 py-1.5 text-sm font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
-                      {task.priority}
-                    </span>
-                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Due: {new Date(task.dueDate).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
+             {tasks.map((task) => (
+               <div key={task._id || task.id} className="px-8 py-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                 <div className="flex items-center justify-between">
+                   <div className="flex items-center space-x-4">
+                     <CheckSquare className="h-6 w-6 text-gray-400" />
+                     <div>
+                       <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                         {task.title || task.name}
+                       </h3>
+                       <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                         {task.project?.name || task.project}
+                       </p>
+                     </div>
+                   </div>
+                   
+                   <div className="flex items-center space-x-4">
+                     <span className={`px-3 py-1.5 text-sm font-semibold rounded-full ${getStatusColor(task.status || task.state)}`}>
+                       {(task.status || task.state || '').replace('-', ' ')}
+                     </span>
+                     <span className={`px-3 py-1.5 text-sm font-semibold rounded-full ${getPriorityColor(task.priority || task.priorityLevel)}`}>
+                       {task.priority || task.priorityLevel}
+                     </span>
+                     <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                       Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—'}
+                     </span>
+                   </div>
+                 </div>
+               </div>
+             ))}
           </div>
         </div>
 
         {/* Empty State (if no tasks) */}
-        {mockTasks.length === 0 && (
+  {tasks.length === 0 && (
           <div className="text-center py-20">
             <CheckSquare className="h-16 w-16 text-gray-400 mx-auto mb-6" />
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">

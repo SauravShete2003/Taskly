@@ -41,7 +41,6 @@ export default function ProjectDetails() {
     fetchData();
   }, [fetchData]);
 
-  // ✅ CORRECTED: Debounced search function
   const debouncedSearch = useCallback(
     debounce(async (q) => {
       if (q.length < 2) {
@@ -51,8 +50,6 @@ export default function ProjectDetails() {
       setSearchLoading(true);
       try {
         const response = await authService.searchUsers(q);
-        // authService.searchUsers was normalized to return an array, but
-        // accept multiple shapes for resilience (array or axios response)
         if (Array.isArray(response)) {
           setResults(response);
         } else {
@@ -60,7 +57,7 @@ export default function ProjectDetails() {
         }
       } catch (err) {
         console.error("Search failed:", err);
-        setResults([]); // Clear results on error
+        setResults([]);
       } finally {
         setSearchLoading(false);
       }
@@ -75,9 +72,7 @@ export default function ProjectDetails() {
   };
 
   const handleAddMember = async (userOrId) => {
-    // Accept either a user object or an id string
     const id = typeof userOrId === 'string' ? userOrId : (userOrId && (userOrId._id || userOrId.id));
-    // basic MongoId validation (24 hex chars)
     const isValidObjectId = typeof id === 'string' && /^[0-9a-fA-F]{24}$/.test(id);
     if (!isValidObjectId) {
       toast({
