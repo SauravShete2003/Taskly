@@ -14,19 +14,19 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: [true, 'Email is required'],
-      unique: true, // ensure index exists in DB
+      unique: true,           // Keep only this (no separate schema.index and no index: true)
       lowercase: true,
       trim: true,
       validate: {
         validator: (v) => validator.isEmail(v),
         message: 'Please enter a valid email',
       },
-      index: true
+      // index: true // REMOVED to avoid duplicate index warning
     },
     password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'], // align with your DEFAULTS
+      minlength: [6, 'Password must be at least 6 characters'],
       select: false, // Don’t include password by default
     },
     avatar: {
@@ -45,7 +45,7 @@ const userSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
-      index: true,
+      index: true, // This is fine to keep
     },
     lastLogin: {
       type: Date,
@@ -74,10 +74,10 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Unique index (ensures it's created in the DB)
-userSchema.index({ email: 1 }, { unique: true });
+// NOTE: Removed this to prevent duplicate index warnings
+// userSchema.index({ email: 1 }, { unique: true });
 
-// Hash password before saving
+// Hash password before saving (create/save)
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   try {
@@ -92,38 +92,30 @@ userSchema.pre('save', async function (next) {
 // Hash password on findOneAndUpdate if provided
 userSchema.pre('findOneAndUpdate', async function (next) {
   try {
-    const update = this.getUpdate() || {};
-    const pwd = update.password ?? update.$set?.password;
-    if (!pwd) return next();
+    const update = { ...(this.getUpdate() || {}) };
 
-    const salt = await bcrypt.genSalt(12);
-    const hashed = await bcrypt.hash(pwd, salt);
+    // Support both direct and $set updates
+    const pwd =
+      (update.$set && update.$set.password) ??
+      update.password;
 
-    if (update.password) update.password = hashed;
-    if (update.$set?.password) update.$set.password = hashed;
+    if (pwd) {
+      const salt = await bcrypt.genSalt(12);
+      const hashed = await bcrypt.hash(pwd, salt);
 
-    this.setUpdate(update);
-    next();    // ...existing code...
-    exports.getProjects = async (req, res) => {
-      try {
-        const userId = req.user._id;
-        const userRole = req.user.role;
-    
-        let projects;
-        if (userRole === 'admin') {
-          // Global admin: see all projects
-          projects = await Project.find({});
-        } else {
-          // Member/viewer: see only projects where they are a member
-          projects = await Project.find({ members: userId });
-        }
-    
-        res.status(200).json({ projects });
-      } catch (error) {
-        res.status(500).json({ message: 'Error fetching projects', error });
+      if (update.$set && Object.prototype.hasOwnProperty.call(update.$set, 'password')) {
+        update.$set.password = hashed;
+      } else {
+        update.password = hashed;
       }
-    };
-    // ...existing code...
+
+      this.setUpdate(update);
+    }
+
+    // Ensure validators run and setters (like lowercase) apply properly
+    this.setOptions({ runValidators: true, context: 'query' });
+
+    next();
   } catch (err) {
     next(err);
   }
