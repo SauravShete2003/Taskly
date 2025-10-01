@@ -22,7 +22,7 @@ export const authService = {
       { email, password },
     );
 
-    // Try multiple shapes: nested data, top-level, or headers
+    // Try multiple shapes: nested data, top-level
     let token = extractToken(res.data?.data) || extractToken(res.data);
 
     // Fallback: some backends send token in headers (x-access-token or authorization)
@@ -34,10 +34,38 @@ export const authService = {
       }
     }
 
+    // Additional fallback: sometimes proxies strip body but leave the
+    // raw response text or return the token as a plain string in res.data.
+    if (!token && typeof res.data === 'string' && res.data.trim()) {
+      const candidate = res.data.trim();
+      // If it looks like a JWT (three dot-separated parts) or a Bearer string,
+      // accept it as the token.
+      if (/^Bearer\s+/i.test(candidate)) {
+        token = candidate.replace(/^Bearer\s+/i, '');
+      } else if (/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(candidate)) {
+        token = candidate;
+      }
+    }
+
+    // Final defensive check: maybe the server attached the token to the top-level
+    // response object in a non-standard place; try a shallow search.
+    if (!token) {
+      for (const key of ['token', 'accessToken', 'access_token', 'jwt']) {
+        if (res[key]) {
+          token = res[key];
+          break;
+        }
+      }
+    }
+
     if (!token) {
       // Provide more helpful error with the server response attached
-      console.warn('Login response missing token. Response was:', res?.data || res);
-      const message = res?.data?.message || 'Server did not include a token. Check API response (data.token/accessToken or Authorization header).';
+      console.warn('Login response missing token. Response was:', {
+        status: res?.status,
+        headers: res?.headers,
+        data: res?.data
+      });
+      const message = (res?.data && res.data.message) || 'Server did not include a token. Check API response (data.token/accessToken or Authorization header).';
       const err = new Error(message);
       err.response = res;
       throw err;

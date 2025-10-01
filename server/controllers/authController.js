@@ -34,6 +34,11 @@ export const register = asyncHandler(async (req, res) => {
   // Update last login
   user.lastLogin = new Date();
   await user.save();
+  // Also include token in response headers for clients that read headers
+  // (some hosting/proxy setups may alter response bodies). Keep the
+  // JSON body as the primary source as well.
+  res.setHeader('Authorization', `Bearer ${token}`);
+  res.setHeader('X-Access-Token', token);
 
   return successResponse(
     res,
@@ -82,6 +87,11 @@ export const login = asyncHandler(async (req, res) => {
       tokenPreview: token ? `${token.slice(0, 10)}...` : null,
     });
   }
+
+  // Also expose the token in response headers so frontends behind
+  // proxies or with altered bodies can still extract it from headers.
+  res.setHeader('Authorization', `Bearer ${token}`);
+  res.setHeader('X-Access-Token', token);
 
   return successResponse(res, {
     user: user.getProfile(),
