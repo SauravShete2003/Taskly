@@ -45,7 +45,9 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  // Make sure browsers can read these response headers (Authorization/X-Access-Token)
+  exposedHeaders: ['Authorization', 'X-Access-Token']
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -65,6 +67,16 @@ app.get('/api/health', (req, res) => {
     message: 'Taskly API is running',
     timestamp: new Date().toISOString()
   });
+});
+
+// Debug echo endpoint (temporary) - returns test token in headers and JSON
+// Use this to confirm CORS/exposedHeaders and whether response headers are
+// visible to the browser. Remove this before production if you prefer.
+app.get('/api/debug/echo', (req, res) => {
+  const testToken = 'debug-token-12345';
+  res.setHeader('Authorization', `Bearer ${testToken}`);
+  res.setHeader('X-Access-Token', testToken);
+  return res.json({ ok: true, message: 'debug echo', sentToken: testToken });
 });
 
 app.use('*', (req, res) => {

@@ -34,9 +34,6 @@ export const register = asyncHandler(async (req, res) => {
   // Update last login
   user.lastLogin = new Date();
   await user.save();
-  // Also include token in response headers for clients that read headers
-  // (some hosting/proxy setups may alter response bodies). Keep the
-  // JSON body as the primary source as well.
   res.setHeader('Authorization', `Bearer ${token}`);
   res.setHeader('X-Access-Token', token);
 
