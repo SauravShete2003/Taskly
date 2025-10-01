@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Home, 
-  User, 
-  LogOut, 
-  Menu, 
-  X, 
-  Sun, 
-  Moon, 
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import {
+  Home,
+  User,
+  LogOut,
+  Menu,
+  X,
+  Sun,
+  Moon,
   Search,
-  Plus
-} from 'lucide-react';
-import { authService } from '../../services/auth';
+  Plus,
+} from "lucide-react";
+import { authService } from "../../services/auth";
 
 const Header = ({ onMenuClick }) => {
   const navigate = useNavigate();
@@ -22,20 +22,20 @@ const Header = ({ onMenuClick }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     setIsAuthenticated(!!token);
-    
+
     // Check for dark mode preference
-    const darkMode = localStorage.getItem('darkMode') === 'true';
+    const darkMode = localStorage.getItem("darkMode") === "true";
     setIsDarkMode(darkMode);
     if (darkMode) {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add("dark");
     }
-    
+
     // Get user info if authenticated
     if (token) {
       // You can fetch user info here if needed
-      setUser({ name: 'User', avatar: null });
+      setUser({ name: "User", avatar: null });
     }
   }, []);
 
@@ -43,18 +43,18 @@ const Header = ({ onMenuClick }) => {
     authService.logout();
     setIsAuthenticated(false);
     setUser(null);
-    navigate('/login');
+    navigate("/login");
   };
 
   const toggleDarkMode = () => {
     const newDarkMode = !isDarkMode;
     setIsDarkMode(newDarkMode);
-    localStorage.setItem('darkMode', newDarkMode.toString());
-    
+    localStorage.setItem("darkMode", newDarkMode.toString());
+
     if (newDarkMode) {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add("dark");
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove("dark");
     }
   };
 
@@ -74,9 +74,12 @@ const Header = ({ onMenuClick }) => {
     <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          
           {/* Logo */}
-          <Link to="/dashboard" className="flex items-center space-x-3" onClick={closeMobileMenu}>
+          <Link
+            to="/dashboard"
+            className="flex items-center space-x-3"
+            onClick={closeMobileMenu}
+          >
             <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
               <Home className="h-5 w-5 text-white" />
             </div>
@@ -87,32 +90,32 @@ const Header = ({ onMenuClick }) => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link 
-              to="/dashboard" 
+            <Link
+              to="/dashboard"
               className={`font-medium transition-colors ${
-                isActiveRoute('/dashboard') 
-                  ? 'text-primary-600 dark:text-primary-400' 
-                  : 'text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400'
+                isActiveRoute("/dashboard")
+                  ? "text-primary-600 dark:text-primary-400"
+                  : "text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400"
               }`}
             >
               Dashboard
             </Link>
-            <Link 
-              to="/projects" 
+            <Link
+              to="/projects"
               className={`font-medium transition-colors ${
-                isActiveRoute('/projects') 
-                  ? 'text-primary-600 dark:text-primary-400' 
-                  : 'text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400'
+                isActiveRoute("/projects")
+                  ? "text-primary-600 dark:text-primary-400"
+                  : "text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400"
               }`}
             >
               Projects
             </Link>
-            <Link 
-              to="/tasks" 
+            <Link
+              to="/tasks"
               className={`font-medium transition-colors ${
-                isActiveRoute('/tasks') 
-                  ? 'text-primary-600 dark:text-primary-400' 
-                  : 'text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400'
+                isActiveRoute("/tasks")
+                  ? "text-primary-600 dark:text-primary-400"
+                  : "text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400"
               }`}
             >
               Tasks
@@ -138,42 +141,47 @@ const Header = ({ onMenuClick }) => {
               onClick={toggleDarkMode}
               className="p-2 text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
             >
-              {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {isDarkMode ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
             </button>
             {/* New Project Button */}
-            <Link 
-              to="/projects/new" 
-              className="hidden sm:inline-flex btn-primary"
+            <Link
+              to="/projects/new"
+              className="flex items-center p-2 sm:p-1 font-medium btn-primary"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              New Project
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">New Project</span>
             </Link>
 
             {/* User menu */}
             {isAuthenticated ? (
               <div className="flex items-center space-x-3">
-                <Link 
-                  to="/profile" 
+                <Link
+                  to="/profile"
                   className="flex items-center space-x-2 p-2 text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
                     <User className="h-4 w-4 text-primary-600 dark:text-primary-400" />
                   </div>
-                  <span className="hidden lg:block text-sm font-medium">{user?.name}</span>
+                  <span className="hidden lg:block text-sm font-medium">
+                    {user?.name}
+                  </span>
                 </Link>
                 <button
                   onClick={handleLogout}
                   className="flex items-center space-x-2 p-2 text-gray-600 hover:text-danger-600 dark:text-gray-300 dark:hover:text-danger-400 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   <LogOut className="h-5 w-5" />
-                  <span className="hidden lg:block text-sm font-medium">Logout</span>
+                  <span className="hidden lg:block text-sm font-medium">
+                    Logout
+                  </span>
                 </button>
               </div>
             ) : (
-              <Link
-                to="/login"
-                className="btn-primary text-sm"
-              >
+              <Link to="/login" className="btn-primary text-sm">
                 Login
               </Link>
             )}
@@ -183,7 +191,11 @@ const Header = ({ onMenuClick }) => {
               onClick={toggleMobileMenu}
               className="md:hidden p-2 text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
             >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
           </div>
         </div>
@@ -203,34 +215,34 @@ const Header = ({ onMenuClick }) => {
               </div>
 
               {/* Mobile Navigation Links */}
-              <Link 
-                to="/dashboard" 
+              <Link
+                to="/dashboard"
                 className={`px-3 py-2 rounded-lg font-medium transition-colors ${
-                  isActiveRoute('/dashboard') 
-                    ? 'text-primary-600 bg-primary-50 dark:bg-primary-900/20' 
-                    : 'text-gray-600 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-primary-400 dark:hover:bg-gray-800'
+                  isActiveRoute("/dashboard")
+                    ? "text-primary-600 bg-primary-50 dark:bg-primary-900/20"
+                    : "text-gray-600 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-primary-400 dark:hover:bg-gray-800"
                 }`}
                 onClick={closeMobileMenu}
               >
                 Dashboard
               </Link>
-              <Link 
-                to="/projects" 
-                className={`px-3 py-2 rounded-lg font-medium transition-colors ${
-                  isActiveRoute('/projects') 
-                    ? 'text-primary-600 bg-primary-50 dark:bg-primary-900/20' 
-                    : 'text-gray-600 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-primary-400 dark:hover:bg-gray-800'
+              <Link
+                to="/projects"
+                className={`px-2 py-1 rounded-lg font-medium transition-colors ${
+                  isActiveRoute("/projects")
+                    ? "text-primary-600 bg-primary-50 dark:bg-primary-900/20"
+                    : "text-gray-600 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-primary-400 dark:hover:bg-gray-800"
                 }`}
                 onClick={closeMobileMenu}
               >
                 Projects
               </Link>
-              <Link 
-                to="/tasks" 
+              <Link
+                to="/tasks"
                 className={`px-3 py-2 rounded-lg font-medium transition-colors ${
-                  isActiveRoute('/tasks') 
-                    ? 'text-primary-600 bg-primary-50 dark:bg-primary-900/20' 
-                    : 'text-gray-600 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-primary-400 dark:hover:bg-gray-800'
+                  isActiveRoute("/tasks")
+                    ? "text-primary-600 bg-primary-50 dark:bg-primary-900/20"
+                    : "text-gray-600 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-primary-400 dark:hover:bg-gray-800"
                 }`}
                 onClick={closeMobileMenu}
               >
@@ -238,8 +250,8 @@ const Header = ({ onMenuClick }) => {
               </Link>
 
               {/* Mobile New Project Button */}
-              <Link 
-                to="/projects/new" 
+              <Link
+                to="/projects/new"
                 className="mx-3 btn-primary justify-center"
                 onClick={closeMobileMenu}
               >
