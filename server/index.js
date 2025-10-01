@@ -24,8 +24,24 @@ dotenv.config();
 const app = express();
 const server = createServer(app);
 
-// Connect to database
-connectDB();
+// Connect to database and only start server after successful connection.
+// If DB connection fails, exit with non-zero code so deployment platforms
+// (like Render) mark the deploy as failed and you can set MONGODB_URI.
+// Connect to DB and start server only after successful connection
+(async () => {
+  try {
+    await connectDB();
+
+    const PORT = process.env.PORT || 5000;
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error('Failed to connect to the database. Exiting.');
+    console.error(err);
+    process.exit(1);
+  }
+})();
 
 // Middleware
 const allowedOrigins = [
@@ -83,8 +99,4 @@ app.use('*', (req, res) => {
   errorResponse(res, MESSAGES.ROUTE_NOT_FOUND, 404);
 });
 
-const PORT = process.env.PORT || 5000;
-
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+// server is started after DB connection (see above)
