@@ -2,8 +2,7 @@ import mongoose from 'mongoose';
 
 const connectDB = async () => {
   const mongoUri =
-    process.env.MONGODB_URI ||
-    (process.env.NODE_ENV === 'production' ? null : 'mongodb://localhost:27017/taskly');
+    process.env.MONGODB_URI 
 
   if (!mongoUri) {
     const msg =
